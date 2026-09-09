@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-page-node-id="TDd33vkTNQluQlsIZqr4UQ">
-<head data-page-node-id="mtN3TdzjNblVTuqtisathL">
-<meta charset="UTF-8" data-page-node-id="o5t9bItb6tBJxp0RxYHrC5">
-<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="o8JmeZ1TmM38h8RTzTvoZB">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" data-page-node-id="PGM67MsdEtlUyvoBehk6jh">
-<meta http-equiv="Pragma" content="no-cache" data-page-node-id="NpIASf7cPqfSP6l3WcdrtP">
-<meta http-equiv="Expires" content="0" data-page-node-id="wpxKMW39ONK1sU4mLoA95T">
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>容声冰箱自营投放看板</title>
 <script>
 /*
@@ -261,127 +261,152 @@ footer{text-align:center;font-size:12px;color:var(--ink-3);padding-top:22px;flex
 .lk{cursor:pointer;color:var(--primary);transition:background .12s}
 .lk:hover{text-decoration:underline}
 .lk-on{background:var(--primary-soft);color:var(--primary-ink);font-weight:600;text-decoration:none}
+/* 人群分类树形折叠（一级 → 二级 → 三级） */
+.tgl{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-right:6px;
+  border-radius:4px;background:#F1F3F7;color:var(--ink-2);font-size:9px;line-height:1;cursor:pointer;
+  user-select:none;flex:none;transition:background .15s,color .15s}
+.tgl:hover{background:var(--primary-soft);color:var(--primary-ink)}
+.tgl.open{background:var(--primary-soft);color:var(--primary-ink)}
+tr.lv1 td.l{font-weight:600}
+tr.lv3 td.l{color:var(--ink-2)}
+/* 侧栏「其他产品」折叠下拉 */
+.more-wrap{margin-top:11px;border-top:1px dashed var(--line);padding-top:9px}
+.more-h{font-size:12px;color:var(--ink-2);cursor:pointer;user-select:none;
+  display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.more-h:hover{color:var(--primary-ink)}
+.more-h .ar{font-size:10px;color:var(--ink-3);transition:transform .18s}
+.more-h.open .ar{transform:rotate(180deg)}
+.more-b{margin-top:7px}
+.more-b[hidden]{display:none}
+.flbl-sub{font-size:10.5px;font-weight:400;color:var(--ink-3)}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:1100px){.layout{flex-direction:column}.sidebar{width:100%;flex:none;position:static;max-height:none;overflow:visible}}
 @media(max-width:980px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
-<body data-page-node-id="BkuZmGvATgUpeV2CCuPYvt">
-<div class="wrap" data-page-node-id="QnLrdkARzLpAmxOGogDDqF">
-<header data-page-node-id="liT6oxhNb69s8PTkiDub6x">
-  <div class="brand" data-page-node-id="vxfvc7GkLNMcdm1xCNqkXT">
-    <div class="logo" data-page-node-id="ENFIcVMCkgU3dvppGGk21s">容</div>
-    <div class="brand-txt" data-page-node-id="WFGoxlZPQIucsDIKc2Cl7z">
-      <h1 data-page-node-id="qRhtBg0rw6cDuXzNEffbyR">容声冰箱自营投放看板</h1>
-      <div class="sub" id="updated" data-page-node-id="CO4a52ynEbVSPlrRjfUXNm"></div>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="logo">容</div>
+    <div class="brand-txt">
+      <h1>容声冰箱自营投放看板</h1>
+      <div class="sub" id="updated"></div>
     </div>
   </div>
-  <div class="src" id="srcinfo" data-page-node-id="j9Lr3KbfVvBMNyOTVVfWBb"></div>
+  <div class="src" id="srcinfo"></div>
 </header>
 
-<div class="layout" data-page-node-id="4iRADHX3OtBNzGBjpxeGTr">
-  <aside class="sidebar" data-page-node-id="3mZlPGt9g9JXnieAMsCGsW">
-    <div class="fgrp" data-page-node-id="T5KWxHK7mAC51c9XDeAr8F">
-      <div class="flbl" data-page-node-id="T2R7dFXADx6frByLztMtFC">日期区间</div>
-      <div class="daterange" data-page-node-id="8kKzrtDVVOhyJbDnzHo0FB">
-        <input type="date" id="fDateFrom" class="dinput" data-page-node-id="ztN2qMIvMRpnnYhIHuoPZt">
-        <span class="tilde" data-page-node-id="aBKxeD7lpBHDx8xcTWl4pF">~</span>
-        <input type="date" id="fDateTo" class="dinput" data-page-node-id="hQBhTB3oyYZCvC8cwrg8zd">
+<div class="layout">
+  <aside class="sidebar">
+    <div class="fgrp">
+      <div class="flbl">日期区间</div>
+      <div class="daterange">
+        <input type="date" id="fDateFrom" class="dinput">
+        <span class="tilde">~</span>
+        <input type="date" id="fDateTo" class="dinput">
       </div>
     </div>
-    <div class="fgrp" data-page-node-id="1cb8ZmwOvGEDWdDCUJsXzC">
-      <div class="flbl" data-page-node-id="oM3KARj0Q3TkNDEPtwkPNX">对比日期</div>
-      <div class="daterange" data-page-node-id="60YMStEfQJbgptMwbb8L2C">
-        <input type="date" id="fCmpFrom" class="dinput" data-page-node-id="Xs7AbGg8adonkuTKUPR5RZ">
-        <span class="tilde" data-page-node-id="biz1ZfiFuyFIJxCvKr9rng">~</span>
-        <input type="date" id="fCmpTo" class="dinput" data-page-node-id="8VHWPbCvAlRZZwqsXwUU4J">
+    <div class="fgrp">
+      <div class="flbl">对比日期</div>
+      <div class="daterange">
+        <input type="date" id="fCmpFrom" class="dinput">
+        <span class="tilde">~</span>
+        <input type="date" id="fCmpTo" class="dinput">
       </div>
     </div>
-    <button id="adviceBtn" class="advice-btn" data-page-node-id="8GiH3GBzXFMGFlCFC278UK">调整建议</button>
-    <div class="fgrp" data-page-node-id="7LviKXeannao5Qy0Upj5Gn">
-      <div class="flbl" data-page-node-id="PYXCnJSwiQEoE6zClqWAgm">产品定位 / 简称</div>
-      <div class="caps-grouped" id="fDwJcCaps" data-page-node-id="Ryk7YrlMhdSv0s6QpbYMbC"></div>
+    <button id="adviceBtn" class="advice-btn">调整建议</button>
+    <div class="fgrp">
+      <div class="flbl">产品定位 / 简称 <span class="flbl-sub">当天有消耗</span></div>
+      <div class="caps-grouped" id="fDwJcCaps"></div>
+      <div class="more-wrap">
+        <div class="more-h" id="otherToggle"><span>其他产品<span id="otherCount"></span></span><span class="ar">▾</span></div>
+        <div class="more-b" id="otherBody" hidden>
+          <select id="fOtherSel" class="selbox"></select>
+        </div>
+      </div>
     </div>
-    <button id="fReset" class="tab" style="width:100%;border:1px solid #E8EAED" data-page-node-id="XZnK6aVSHQ02wcRlMpqz6g">重置筛选</button>
+    <button id="fReset" class="tab" style="width:100%;border:1px solid #E8EAED">重置筛选</button>
   </aside>
 
-  <div class="main" data-page-node-id="3CMbCQWJYt38syXm56sAWp">
-    <div class="alerts" id="alerts" data-page-node-id="Gnepr8cDFj35CYDuthXwOE"></div>
-    <div class="kpis" id="kpis" data-page-node-id="hdcuKejI9KGMWcl3N5T63Q"></div>
+  <div class="main">
+    <div class="alerts" id="alerts"></div>
+    <div class="kpis" id="kpis"></div>
 
-    <div class="grid" style="grid-template-columns:7fr 3fr" data-page-node-id="iTbGrBXTkUsmL8U80z6Khq">
-      <div class="card" data-page-node-id="1G8sWOXtyuWc2qMfzeCJte">
-        <h2 data-page-node-id="3M0RNbaII0jLdefDUkYlBx">各渠道数据情况</h2>
-        <div class="ch-filterbar" id="chFilters" data-page-node-id="a1wq4OvNTaAxA32NafVFkQ"></div>
-        <div class="tw ch-tw fit" data-page-node-id="lTCruaVHM9T3ZwYrxCUfQo"><table id="chTable" data-page-node-id="yfxArbAsFVsARCX3oB88gk"></table></div>
-      </div>
-      <div class="card" data-page-node-id="3rHFTHimv3e1T4FBe7T2Zh">
-        <h2 data-page-node-id="mY8RCkO0pEaUFSIIOBXr1Q">各渠道 vs 整体均值
-          <select id="chCmpSel" class="search" style="width:auto;font-size:12px" data-page-node-id="NASG8q9UQ0gHCUOq1sbrB2"></select>
-        </h2>
-        <div class="desc" id="chCmpDesc" data-page-node-id="rGj3NoShlBZgWYZRCnjV3S"></div>
-        <div id="c_chcmp" class="chart" data-page-node-id="UNXCFVfdevxXy5aFR7GVO0"></div>
-      </div>
-    </div>
-
-    <div class="grid one" data-page-node-id="oiLXUaPnYPD1LO9cTTqRKF">
-      <div class="card" data-page-node-id="hg5DwKerCxxXs0lzqB2jPY">
-        <h2 data-page-node-id="b1Z7jxAT0RyfppNAyosE3i">效率指标趋势
-          <span style="display:inline-flex;gap:8px;align-items:center" data-page-node-id="xGOnvWHef7am60s8pLxHS7">
-            <select id="effChSel" class="search" style="width:auto;font-size:12px" data-page-node-id="7RKaTpcGYg3fZnzb1Zi1YN"></select>
-            <select id="effSel" class="search" style="width:auto;font-size:12px" data-page-node-id="bbABJe9ie0VxHJVJg1vwjw"></select>
+    <div class="grid one">
+      <div class="card">
+        <h2>效率指标趋势
+          <span style="display:inline-flex;gap:8px;align-items:center">
+            <select id="effChSel" class="search" style="width:auto;font-size:12px"></select>
+            <select id="effSel" class="search" style="width:auto;font-size:12px"></select>
           </span>
         </h2>
-        <div class="desc" data-page-node-id="2J2ysLtHGNI7EyVUmRSyu8">默认展示<b data-page-node-id="wNSZpo4DTwoUD9QeCRNTdH">全渠道的花费</b>走势；右上角可分别切换渠道与指标。总ROI = 总订单金额 ÷ 花费；直接ROI = 直接订单金额 ÷ 花费；CPC = 花费 ÷ 点击数；CVR / 加购率 = 对应行为数 ÷ 点击数。此表不受「日期区间 / 对比日期」影响，仅随 简称 / 产品定位 变化。</div>
-        <div id="c_eff" class="chart" data-page-node-id="loNpElFVkVe98xVEyRGbl3"></div>
+        <div class="desc" id="effDesc"></div>
+        <div id="c_eff" class="chart"></div>
       </div>
     </div>
 
-    <div class="grid one" data-page-node-id="B8APrWBsVZ0KHwnRQz5K1O">
-      <div class="card" data-page-node-id="f9bfsLkJDwivanvhjCDVMD">
-        <h2 data-page-node-id="7ERy3PQuvbEvJnQicRBgXb">关键词类型数据情况</h2>
-        <div class="ch-filterbar" id="kwFilters" data-page-node-id="nzrEiDI16DWcRndCTeHF9H"></div>
-        <div class="tw dim-tw fit" data-page-node-id="lHmlBw1J7a1ZeUbewYBaP9"><table id="kwDimTable" data-page-node-id="zoQeZ30fM88I4ZNSNN3o0u"></table></div>
+    <div class="grid" style="grid-template-columns:7fr 3fr">
+      <div class="card">
+        <h2>各渠道数据情况</h2>
+        <div class="ch-filterbar" id="chFilters"></div>
+        <div class="tw ch-tw fit"><table id="chTable"></table></div>
+      </div>
+      <div class="card">
+        <h2>各渠道 vs 整体均值
+          <select id="chCmpSel" class="search" style="width:auto;font-size:12px"></select>
+        </h2>
+        <div class="desc" id="chCmpDesc"></div>
+        <div id="c_chcmp" class="chart"></div>
       </div>
     </div>
 
-    <div class="grid one" data-page-node-id="32yNieo5jvTYB4TRvbvIxy">
-      <div class="card" data-page-node-id="Z4Be6LBTrFKMwQpyzJKoWz">
-        <h2 data-page-node-id="YRTKHBNfUNcGbsaEzBMbMQ">关键词明细 <input class="search" id="kwSearch" placeholder="搜索关键词…" data-page-node-id="Yu9otwEPjCjqVZ05dpuZKp"> <span id="kwDrill" class="drill" data-page-node-id="Z1k0bfa91wqmbuVeDTExFn"></span></h2>
-        <div class="desc" id="kwDesc" data-page-node-id="lAOV9STey1CLXv3H5grGwn"></div>
-        <div class="tw" data-page-node-id="fjzkD9tVPuyEkGdGW0v9vH"><table id="kwTable" data-page-node-id="XJqoJnRrOjh0MJvGWKggR7"></table></div>
+    <div class="grid one">
+      <div class="card">
+        <h2>关键词类型数据情况</h2>
+        <div class="ch-filterbar" id="kwFilters"></div>
+        <div class="tw dim-tw fit"><table id="kwDimTable"></table></div>
       </div>
     </div>
 
-    <div class="grid one" data-page-node-id="0NgiH8XS7JDQAfcpeDx7Gt">
-      <div class="card" data-page-node-id="GpBn7DfAMwrugtW3OxCjQA">
-        <h2 data-page-node-id="ZuC3YiKamCK3FrSTRKR3IB">人群分类数据情况 <span class="ch-multibar" id="audChFilter" data-page-node-id="ksiaJhAamNvPbR8pK0Lrer"></span></h2>
-        <div class="ch-filterbar" id="audFilters" data-page-node-id="hoWAOkDix8johyIYVQGzaI"></div>
-        <div class="tw dim-tw" data-page-node-id="G7oEXTzmmsrXsOdAr9wFsp"><table id="audDimTable" data-page-node-id="vtmA8Do2AYAMtbTE6QyFg8"></table></div>
+    <div class="grid one">
+      <div class="card">
+        <h2>关键词明细 <input class="search" id="kwSearch" placeholder="搜索关键词…"> <span id="kwDrill" class="drill"></span></h2>
+        <div class="desc" id="kwDesc"></div>
+        <div class="tw"><table id="kwTable"></table></div>
       </div>
     </div>
 
-    <div class="grid one" data-page-node-id="SaGDpBtJ3KulVVpFgWIjVC">
-      <div class="card" data-page-node-id="MheovOCnsRdGN0XKx2F2sK">
-        <h2 data-page-node-id="K2H1S6NBpL7PuVwWDQYCE1">人群明细 <input class="search" id="audSearch" placeholder="搜索人群…" data-page-node-id="bVOO9nlEAplxr6WwG8J1Al"> <span id="audDrill" class="drill" data-page-node-id="HJsz2r4vqBVaxeNHKPH7fj"></span></h2>
-        <div class="desc" id="audDesc" data-page-node-id="JXRjjA2TMNGNj5we0LrZM7"></div>
-        <div class="tw" data-page-node-id="JDbIu7Wvnzp2LWGnF5dDPM"><table id="audTable" data-page-node-id="n50UWp5XFgnZ3T1zDcIaW8"></table></div>
+    <div class="grid one">
+      <div class="card">
+        <h2>人群分类数据情况 <span class="ch-multibar" id="audChFilter"></span></h2>
+        <div class="desc">点击 ▸ 逐层展开（一级 → 二级 → 三级，默认折叠）；点击二级或三级名称可联动筛选下方「人群明细」。</div>
+        <div class="ch-filterbar" id="audFilters"></div>
+        <div class="tw dim-tw"><table id="audDimTable"></table></div>
       </div>
     </div>
 
-    <footer data-page-node-id="GKCcm7APkRFNL1aNcYOufq">数据源：京准通后台导出 CSV（已剔除冷柜计划，并按匹配表补齐渠道/简称/产品定位等维度）　|　管道：process_datasources.py → ingest.py　|　渲染：ECharts</footer>
+    <div class="grid one">
+      <div class="card">
+        <h2>人群明细 <input class="search" id="audSearch" placeholder="搜索人群…"> <span id="audDrill" class="drill"></span></h2>
+        <div class="desc" id="audDesc"></div>
+        <div class="tw"><table id="audTable"></table></div>
+      </div>
+    </div>
+
+    <footer>数据源：京准通后台导出 CSV（已剔除冷柜计划，并按匹配表补齐渠道/简称/产品定位等维度）　|　管道：process_datasources.py → ingest.py　|　渲染：ECharts</footer>
   </div>
 </div>
 </div>
 
 <!-- 调整建议弹窗：必须位于主脚本之前, 否则绑定时元素尚未解析(getElementById 返回 null 会中断整个初始化) -->
-<div id="adviceModal" class="modal-mask" hidden data-page-node-id="jl1h1AWdaDWgogO2NmtsBO">
-  <div class="modal-card" role="dialog" aria-modal="true" data-page-node-id="gTetPXaBfpQJSyChEMXE4G">
-    <div class="modal-head" data-page-node-id="NVdaN4IEAuj1fNEzagfYsj">
-      <span class="modal-title" data-page-node-id="P1AiAvFm8SM57GSFqC5cEJ">调整建议</span>
-      <button id="adviceModalClose" class="modal-x" aria-label="关闭" data-page-node-id="imAlXUtCCcZIdW3Uzd5zvD">×</button>
+<div id="adviceModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <span class="modal-title">调整建议</span>
+      <button id="adviceModalClose" class="modal-x" aria-label="关闭">×</button>
     </div>
-    <div class="modal-body" id="adviceModalBody" data-page-node-id="WkiewM28Lm9wB3PhAMxZgz"></div>
+    <div class="modal-body" id="adviceModalBody"></div>
   </div>
 </div>
 
@@ -499,22 +524,38 @@ factsMain.forEach(r => { const j=String(r['简称']??''); if(j) jcCount[j]=(jcCo
    - 简称也可点选：点选某简称即只筛选该简称(fJcSel)，同时清空产品定位。
    - 整体单选：任意时刻仅一个维度生效（产品定位 或 单个简称），互不选通。
    - 简称以可点选标签列于其产品定位之下；消耗(花费)为 0 的产品定位 / 简称不显示。名称取自匹配表。 */
+/* 产品定位 / 简称 的全区间花费（用于剔除零消耗项） */
+const dwSpend = {}, jcSpend = {};
+factsMain.forEach(r=>{
+  const d=String(r['产品定位']??''), j=String(r['简称']??''), sp=Number(r['花费']||0);
+  dwSpend[d]=(dwSpend[d]||0)+sp;
+  if(j) jcSpend[j]=(jcSpend[j]||0)+sp;
+});
+/* 当天（数据末日）在 关键词 / 人群 明细中仍有消耗的产品简称 —— 侧栏主区只展示这批 */
+const lastDate = allDates[allDates.length-1] || '';
+const activeJc = new Set();
+(function(){
+  if(!lastDate) return;
+  factsKwD.forEach(r=>{
+    if(String(r['日期'])!==lastDate || num(r['花费'])<=0) return;
+    (kwMap[String(kwNames[r['ki']] ?? '')]||[]).forEach(p=>{ const j=String(p[0]??''); if(j) activeJc.add(j); });
+  });
+  factsAudD.forEach(r=>{
+    if(String(r['日期'])!==lastDate || num(r['花费'])<=0) return;
+    (audMap[String(r['人群ID'])]||[]).forEach(p=>{ const j=String(p[0]??''); if(j) activeJc.add(j); });
+  });
+  /* 兜底：当天确实无明细数据时，退回「全区间有消耗」 */
+  if(!activeJc.size) allJc.forEach(j=>{ if((jcSpend[j]||0)>0) activeJc.add(j); });
+})();
+
 function renderDwJcCaps(){
   const el = document.getElementById('fDwJcCaps');
   if(!el) return;
-  const presentDw = new Set(allDw), presentJc = new Set(allJc);
-  const dwSpend = {}, jcSpend = {};
-  factsMain.forEach(r=>{
-    const d=String(r['产品定位']??''), j=String(r['简称']??''), sp=Number(r['花费']||0);
-    dwSpend[d]=(dwSpend[d]||0)+sp;
-    if(j) jcSpend[j]=(jcSpend[j]||0)+sp;
-  });
+  const presentJc = new Set(allJc);
   const groups = [];
   DW_ORDER.forEach(v=>{
-    if(!presentDw.has(v)) return;
-    if((dwSpend[v]||0) <= 0) return;            // 消耗为0的产品定位不显示
     const jcs = Object.keys(jcToDw)
-      .filter(j => jcToDw[j]===v && presentJc.has(j) && (jcSpend[j]||0) > 0)  // 消耗为0的简称不显示
+      .filter(j => jcToDw[j]===v && presentJc.has(j) && activeJc.has(j))   // 仅当天有消耗的产品
       .sort((a,b)=>(jcCount[b]||0)-(jcCount[a]||0));
     if(!jcs.length) return;
     groups.push({v, jcs});
@@ -525,9 +566,8 @@ function renderDwJcCaps(){
   let h = `<span class="cap ${allClear?'on':''}" data-dw="${encodeURIComponent('全部')}">全部</span>`;
   h += groups.map(g=>{
     const dwOn = (fDwSel===g.v) || (fJcSel!=='全部' && jcToDw[fJcSel]===g.v);
-    const label = g.unmatched ? '(未匹配)' : g.v;
     return `<div class="cap-grp"><div class="cap-grp-h">`
-      + `<span class="cap dw ${dwOn?'on':''}" data-dw="${encodeURIComponent(g.v)}">${label}</span></div>`
+      + `<span class="cap dw ${dwOn?'on':''}" data-dw="${encodeURIComponent(g.v)}">${g.v}</span></div>`
       + `<div class="cap-grp-b">` + g.jcs.map(j=>`<span class="cap jc ${fJcSel===j?'on':''}" data-jc="${encodeURIComponent(j)}">${j}</span>`).join('') + `</div></div>`;
   }).join('');
   el.innerHTML = h;
@@ -549,6 +589,34 @@ function renderDwJcCaps(){
       renderDwJcCaps(); applyAll();
     });
   });
+  renderOtherSel();
+}
+
+/* 「其他产品」：当天无消耗、但区间内仍有数据的产品，折叠成下拉单选（按产品定位分组） */
+function renderOtherSel(){
+  const sel = document.getElementById('fOtherSel'); if(!sel) return;
+  const others = allJc.filter(j => !activeJc.has(j) && (jcSpend[j]||0) > 0);
+  const byDw = {};
+  others.forEach(j => { let d = String(jcToDw[j] || ''); if(!d || d === '-' || d === '未匹配') d = '未匹配'; (byDw[d] = byDw[d] || []).push(j); });
+  const keys = Object.keys(byDw).sort((a,b)=>{
+    const ia = DW_ORDER.indexOf(a), ib = DW_ORDER.indexOf(b);
+    return (ia<0?99:ia) - (ib<0?99:ib);
+  });
+  let h = `<option value="">选择产品…</option>`;
+  if(!others.length) h += `<option value="" disabled>暂无其他产品</option>`;
+  keys.forEach(d=>{
+    h += `<optgroup label="${d}">` + byDw[d].sort((a,b)=>a.localeCompare(b,'zh')).map(j=>
+      `<option value="${encodeURIComponent(j)}" ${fJcSel===j?'selected':''}>${j}</option>`).join('') + `</optgroup>`;
+  });
+  sel.innerHTML = h;
+  const cnt = document.getElementById('otherCount');
+  if(cnt) cnt.textContent = others.length ? `（${others.length}）` : '';
+  /* 当前选中的产品若落在「其他」里，默认展开下拉，避免选中项看不见 */
+  if(others.indexOf(fJcSel) >= 0){
+    const b = document.getElementById('otherBody'), t = document.getElementById('otherToggle');
+    if(b) b.removeAttribute('hidden');
+    if(t) t.classList.add('open');
+  }
 }
 /* 日期区间 */
 let fDateFrom = allDates[0] || '', fDateTo = allDates[allDates.length-1] || '';
@@ -586,7 +654,7 @@ const partialDay = (meta.date_max === todayStr) ? meta.date_max : null;
 document.getElementById('updated').textContent =
   `最近更新时间：${meta.download_at || meta.generated_at}`;
 document.getElementById('srcinfo').textContent =
-  `三表记录数：投放进度 ${meta.rows['投放进度']}　关键词 ${meta.rows['关键词']}　人群 ${meta.rows['人群']}（已按业务主键去重）`;
+  '数据维度：核心指标丨分日趋势丨渠道丨关键词丨人群';
 
 /* ---- 告警 / 调整建议 ---- */
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -688,16 +756,14 @@ function renderAdviceHTML(){
     + adviceKindHTML('关键词', kw, '词') + adviceKindHTML('人群', aud, '人群') + `</div>`;
 }
 
-/* 顶部告警区始终显示质量/日期告警；调整建议改为「整体筛选」下方按钮触发（见 toggleAdvice） */
+/* 顶部告警区：仅保留「日期缺口」（数据缺失才提示）。
+   已按用户要求移除：当天未跑满提示 / 点击>展现逻辑异常 / 数据质量校验通过项 三句。 */
 function renderAlerts(){
   const box = document.getElementById('alerts');
   const out = [];
-  if (partialDay) out.push(`<div class="alert"><b>${partialDay} 为当天数据</b>，尚未跑满全天，末端指标偏低属正常，不应解读为下滑。</div>`);
   (Q.warnings || []).forEach(w => {
     if (w.indexOf('日期连续性') === 0) out.push(`<div class="alert"><b>日期缺口</b>：${w.replace('日期连续性: ','')}，该日无报表数据，趋势图已跳过。</div>`);
-    else if (w.indexOf('点击≤展现') === 0) out.push(`<div class="alert"><b>逻辑异常</b>：${w.replace('点击≤展现: ','')}记录点击数大于展现数，已保留原始值未做修正。</div>`);
   });
-  out.push(`<div class="alert info">数据质量校验 <b>${Q.summary.passed}/${Q.summary.total_checks}</b> 项通过${Q.summary.warning_count ? '，'+Q.summary.warning_count+' 项告警' : '，未发现异常'}。</div>`);
   box.innerHTML = out.join('');
 }
 
@@ -822,6 +888,57 @@ function renderEffSel(){
   sel.addEventListener('change', e => { effMetric = e.target.value; drawEff(); });
 }
 
+/* 趋势备注：一句总结近期投放趋势的变化（随 渠道 / 指标 切换实时重算） */
+function summarizeEff(){
+  const el = document.getElementById('effDesc'); if(!el) return;
+  const k = effMetric, def = METRIC_DEFS[k], ch = effChannel;
+  const rows = maskAll(factsMain);
+  const src = (ch === '全渠道')
+    ? agg(rows, ['日期'])
+    : agg(rows.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
+  const map = new Map(src.map(r => [r['日期'], r]));
+  const ds = allDates, n = ds.length;
+  if(!n){ el.textContent = ''; return; }
+  const win = Math.max(2, Math.min(7, Math.floor(n / 2)));
+  const prev = ds.slice(Math.max(0, n - win * 2), n - win);
+  const cur  = ds.slice(n - win);
+  /* 区间取值：绝对量取日均；比率类先聚合分子分母再相除（与 KPI 口径一致） */
+  const val = arr => {
+    if(!arr.length) return null;
+    if(def.abs){
+      const s = arr.reduce((a, d) => a + num((map.get(d) || {})[k]), 0);
+      return s / arr.length;
+    }
+    const sn = arr.reduce((a, d) => a + num((map.get(d) || {})[def.num]), 0);
+    const sd = arr.reduce((a, d) => a + num((map.get(d) || {})[def.den]), 0);
+    return sd ? sn / sd * def.scale : null;
+  };
+  const v1 = val(prev), v2 = val(cur);
+  if(v2 === null){ el.textContent = ''; return; }
+  const txt = v => v === null ? '—' : def.fmt(v);
+  const isPct = def.scale === 100;
+  let chg;
+  if(v1 === null || !v1) chg = '前期无可比数据';
+  else if(isPct){
+    const d = v2 - v1;
+    chg = `较前 ${prev.length} 天 ${d >= 0 ? '▲' : '▼'}${Math.abs(d).toFixed(1)}pp（${txt(v1)} → ${txt(v2)}）`;
+  }else{
+    const p = (v2 - v1) / Math.abs(v1) * 100;
+    chg = `较前 ${prev.length} 天 ${p >= 0 ? '▲' : '▼'}${Math.abs(p).toFixed(1)}%（${txt(v1)} → ${txt(v2)}）`;
+  }
+  /* 形态：近段内 首 3 日 vs 末 3 日 */
+  let trend = '';
+  if(cur.length >= 6){
+    const vh = val(cur.slice(0, 3)), vt = val(cur.slice(-3));
+    if(vh && vt != null){
+      const d = (vt - vh) / Math.abs(vh);
+      trend = d > 0.05 ? '，末尾 3 天仍在走高' : (d < -0.05 ? '，但末尾 3 天已回落' : '，末尾 3 天趋于平稳');
+    }
+  }
+  el.textContent = `近 ${cur.length} 天（${fmtDate(cur[0])}~${fmtDate(cur[cur.length-1])}）`
+    + `${ch === '全渠道' ? '全渠道' : ch} ${k} ${txt(v2)}${def.abs ? '（日均）' : ''}，${chg}${trend}。`;
+}
+
 function drawEff(){
   const k = effMetric, c = EFF_SERIES[k], ch = effChannel;
   const dates = allDates;
@@ -855,6 +972,7 @@ function drawEff(){
       lineStyle:{width:2,color:c.color},itemStyle:{color:c.color},
       data:data}]
   });
+  summarizeEff();
 }
 
 /* ---- 各渠道模块：数据表 + vs 整体均值对比 ---- */
@@ -1010,7 +1128,7 @@ function renderDimFilters(k){
     cb.addEventListener('change', e => {
       const m = e.target.dataset.m;
       if(e.target.checked) cfg.sel.add(m); else cfg.sel.delete(m);
-      renderDimTable(k);
+      if(k === 'aud') renderAudTree(); else renderDimTable(k);
     });
   });
 }
@@ -1085,6 +1203,130 @@ function renderDimTable(k){
   });
 }
 
+/* ---- 人群分类树形表（一级 → 二级 → 三级）----
+   · 默认全部折叠，点 ▸ 逐层展开（expL1 / expL2 记录展开态）
+   · 二级 / 三级 名称均可点击，联动筛选下方「人群明细」（drillAudL2 / drillAudClass，二者互斥）
+   · 三级 → 二级 归属关系由 factsAud 全量推导，不受当前筛选影响 */
+const l3ToL2 = new Map();
+factsAud.forEach(r => {
+  const l2 = String(r['二级分类'] || '').trim(), l3 = String(r['三级分类'] || '').trim();
+  if(!l3) return;
+  if(!l3ToL2.has(l3)) l3ToL2.set(l3, new Set());
+  if(l2) l3ToL2.get(l3).add(l2);
+});
+const expL1 = new Set(), expL2 = new Set();
+let drillAudL2 = null;
+
+function audTree(rows){
+  const root = new Map();
+  const add = (o, r) => { BASE.forEach(c => o[c] = num(o[c]) + num(r[c])); };
+  rows.forEach(r => {
+    const l1 = String(r['一级分类'] || '').trim() || '未匹配';
+    const l2 = String(r['二级分类'] || '').trim() || '未匹配';
+    const l3 = String(r['三级分类'] || '').trim() || '未匹配';
+    if(!root.has(l1)) root.set(l1, {name:l1, o:{}, ch:new Map()});
+    const n1 = root.get(l1); add(n1.o, r);
+    if(!n1.ch.has(l2)) n1.ch.set(l2, {name:l2, o:{}, ch:new Map()});
+    const n2 = n1.ch.get(l2); add(n2.o, r);
+    if(!n2.ch.has(l3)) n2.ch.set(l3, {name:l3, o:{}});
+    add(n2.ch.get(l3).o, r);
+  });
+  const cfg = DIMTABS.aud;
+  const col = (cfg.sortKey === '消耗' || cfg.sortKey === '消耗占比') ? '花费' : cfg.sortKey;
+  const cmpNode = (a, b) => {
+    if(cfg.sortKey === '分类') return cfg.sortDir === 'asc'
+      ? a.name.localeCompare(b.name, 'zh') : b.name.localeCompare(a.name, 'zh');
+    return cfg.sortDir === 'asc' ? num(a.o[col]) - num(b.o[col]) : num(b.o[col]) - num(a.o[col]);
+  };
+  const out = [...root.values()].map(n1 => ({
+    name: n1.name, o: withRates(n1.o),
+    ch: [...n1.ch.values()].map(n2 => ({
+      name: n2.name, o: withRates(n2.o),
+      ch: [...n2.ch.values()].map(n3 => ({name: n3.name, o: withRates(n3.o)}))
+    }))
+  }));
+  out.forEach(n1 => { n1.ch.sort(cmpNode); n1.ch.forEach(n2 => n2.ch.sort(cmpNode)); });
+  out.sort(cmpNode);
+  return out;
+}
+
+function renderAudTree(){
+  const cfg = DIMTABS.aud;
+  const el = document.getElementById(cfg.table); if(!el) return;
+  const curRows = maskDate(factsAud).filter(inAudCh);
+  const cmpRows = maskCmp(factsAud).filter(inAudCh);
+  const cur = audTree(curRows), cmp = audTree(cmpRows);
+  /* 对比值索引：一级 / 一级|二级 / 一级|二级|三级 */
+  const idx = new Map();
+  cmp.forEach(n1 => { idx.set(n1.name, n1.o);
+    n1.ch.forEach(n2 => { idx.set(n1.name + '\u0001' + n2.name, n2.o);
+      n2.ch.forEach(n3 => idx.set(n1.name + '\u0001' + n2.name + '\u0001' + n3.name, n3.o)); }); });
+  const extras = KW_EXTRAS.filter(m => cfg.sel.has(m[0]));
+  const totCur = cur.reduce((a, n) => a + num(n.o['花费']), 0);
+  const totCmp = cmp.reduce((a, n) => a + num(n.o['花费']), 0);
+  const cells = (o, co) => {
+    const pc = totCur ? num(o['花费']) / totCur * 100 : 0;
+    const pp = totCmp ? num(co ? co['花费'] : 0) / totCmp * 100 : 0;
+    let s = `<td>${fmtPct1(pc)}${cmpSub(fmtPct1(pp))}</td>`
+          + `<td>${fmtAmt(o['花费'])}${cmpSub(fmtAmt(co ? co['花费'] : 0))}</td>`;
+    extras.forEach(m => { s += `<td>${metricCell(m[0], o, co)}</td>`; });
+    return s;
+  };
+  const cols = ['人群分类', '消耗占比', '消耗'].concat(extras.map(m => m[0]));
+  let h = '<thead><tr>' + cols.map(c => {
+    const key = (c === '人群分类') ? '分类' : c;
+    const on = cfg.sortKey === key;
+    return `<th class="${c === '人群分类' ? 'l' : ''}" data-k="${key}" style="${on ? 'color:#2B6CB0;font-weight:600' : ''}">${c}${on ? (cfg.sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`;
+  }).join('') + '</tr></thead><tbody>';
+  cur.forEach(n1 => {
+    const o1 = expL1.has(n1.name);
+    h += `<tr class="lv1"><td class="l"><span class="tgl ${o1 ? 'open' : ''}" data-t1="${encodeURIComponent(n1.name)}">${o1 ? '▾' : '▸'}</span><span>${n1.name}</span></td>`
+       + cells(n1.o, idx.get(n1.name)) + '</tr>';
+    if(!o1) return;
+    n1.ch.forEach(n2 => {
+      const k2 = n1.name + '\u0001' + n2.name, o2 = expL2.has(k2);
+      h += `<tr><td class="l" style="padding-left:26px"><span class="tgl ${o2 ? 'open' : ''}" data-t2="${encodeURIComponent(k2)}">${o2 ? '▾' : '▸'}</span>`
+         + `<span class="lk ${drillAudL2 === n2.name ? 'lk-on' : ''}" data-lv="2" data-v="${encodeURIComponent(n2.name)}">${n2.name}</span></td>`
+         + cells(n2.o, idx.get(k2)) + '</tr>';
+      if(!o2) return;
+      n2.ch.forEach(n3 => {
+        const k3 = k2 + '\u0001' + n3.name;
+        h += `<tr class="lv3"><td class="l" style="padding-left:48px">`
+           + `<span class="lk ${drillAudClass === n3.name ? 'lk-on' : ''}" data-lv="3" data-v="${encodeURIComponent(n3.name)}">${n3.name}</span></td>`
+           + cells(n3.o, idx.get(k3)) + '</tr>';
+      });
+    });
+  });
+  const tCur = sumObj(curRows), tCmp = sumObj(cmpRows);
+  let tc = `<td class="l"><b>总计</b></td><td>100%${cmpSub('100%')}</td>`
+         + `<td><b>${fmtAmt(tCur['花费'])}</b>${cmpSub(fmtAmt(tCmp['花费']))}</td>`;
+  extras.forEach(m => { tc += `<td><b>${metricCell(m[0], tCur, tCmp)}</b></td>`; });
+  h += `<tr style="background:#F2F4F7">${tc}</tr></tbody>`;
+  el.innerHTML = h;
+  el.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+    const c = th.dataset.k;
+    if(cfg.sortKey === c){ cfg.sortDir = cfg.sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { cfg.sortKey = c; cfg.sortDir = (c === '分类') ? 'asc' : 'desc'; }
+    renderAudTree();
+  }));
+  el.querySelectorAll('.tgl[data-t1]').forEach(s => s.addEventListener('click', () => {
+    const v = decodeURIComponent(s.dataset.t1);
+    if(expL1.has(v)) expL1.delete(v); else expL1.add(v);
+    renderAudTree();
+  }));
+  el.querySelectorAll('.tgl[data-t2]').forEach(s => s.addEventListener('click', () => {
+    const v = decodeURIComponent(s.dataset.t2);
+    if(expL2.has(v)) expL2.delete(v); else expL2.add(v);
+    renderAudTree();
+  }));
+  el.querySelectorAll('td .lk').forEach(s => s.addEventListener('click', () => {
+    const v = decodeURIComponent(s.dataset.v);
+    if(s.dataset.lv === '3'){ drillAudClass = (drillAudClass === v) ? null : v; drillAudL2 = null; }
+    else { drillAudL2 = (drillAudL2 === v) ? null : v; drillAudClass = null; }
+    renderAudTree(); refreshTables(); renderDrillChip();
+  }));
+}
+
 /* 人群渠道多选筛选：控制 人群分类数据 + 人群明细（与上方指标筛选并列，置于 h2 右上角）
    渠道清单取自「人群」事实表本身（快车/站外/购物触点…），避免列出无人群数据的渠道 */
 function renderAudChFilter(){
@@ -1096,7 +1338,7 @@ function renderAudChFilter(){
     `<label><input type="checkbox" data-ch="${c}" checked> ${c}</label>`).join('');
   const sync = () => {
     audChSel = [...el.querySelectorAll('input')].filter(x => x.checked).map(x => x.dataset.ch);
-    renderDimTable('aud');
+    renderAudTree();
     renderDetail('aud');
   };
   el.querySelectorAll('input').forEach(cb => cb.addEventListener('change', sync));
@@ -1126,8 +1368,9 @@ function renderDetail(kind){
   const mapKeyOf = isKw ? (k)=>String(kwNames[k] ?? '') : (k)=>String(k);
   const filterMap= isKw ? kwMap : audMap;
   const classMap = isKw ? kwTypeMap : audClassMap;
-  const drillVal = isKw ? drillKwType : drillAudClass;
-  const drillName= isKw ? '关键词类型' : '三级分类';
+  /* 人群下钻支持二级与三级（互斥）；二级通过 三级→二级 归属反查 */
+  const drillVal = isKw ? drillKwType : (drillAudClass || drillAudL2);
+  const drillName= isKw ? '关键词类型' : (drillAudClass ? '三级分类' : '二级分类');
   const q = (document.getElementById(isKw?'kwSearch':'audSearch').value || '').trim().toLowerCase();
 
   /* 简称/产品定位 掩码（按主键缓存, 避免重复扫 map） */
@@ -1146,7 +1389,15 @@ function renderDetail(kind){
   const tCur = sumObj(cur), tCmp = sumObj(cmp);
   const totCostCur = num(tCur['花费']), totCostCmp = num(tCmp['花费']);
 
-  let rs = cur.filter(r => !drillVal || (classMap[mapKeyOf(r[keyCol])]||[]).includes(drillVal));
+  let rs = cur.filter(r => {
+    if(isKw) return !drillKwType || (classMap[mapKeyOf(r[keyCol])] || []).includes(drillKwType);
+    if(drillAudClass) return (classMap[mapKeyOf(r[keyCol])] || []).includes(drillAudClass);
+    if(drillAudL2){
+      const l3s = classMap[mapKeyOf(r[keyCol])] || [];
+      return l3s.some(t => (l3ToL2.get(t) || new Set()).has(drillAudL2));
+    }
+    return true;
+  });
   if(q) rs = rs.filter(r => nameOf(r[keyCol]).toLowerCase().indexOf(q) >= 0);
   rs.sort((a,b)=>num(b['花费'])-num(a['花费']));
   const shown = rs.slice(0,150);
@@ -1178,12 +1429,12 @@ function refreshTables(){ renderDetail('kw'); renderDetail('aud'); }
 function renderDrillChip(){
   document.getElementById('kwDrill').innerHTML = drillKwType
     ? `<span class="chip">${drillKwType}<a class="x" data-c="kw">✕</a></span>` : '';
-  document.getElementById('audDrill').innerHTML = drillAudClass
-    ? `<span class="chip">${drillAudClass}<a class="x" data-c="aud">✕</a></span>` : '';
+  document.getElementById('audDrill').innerHTML = (drillAudClass || drillAudL2)
+    ? `<span class="chip">${drillAudClass ? '三级' : '二级'}：${drillAudClass || drillAudL2}<a class="x" data-c="aud">✕</a></span>` : '';
   document.querySelectorAll('.drill .x').forEach(a=>a.addEventListener('click',e=>{
     e.stopPropagation();
-    if(a.dataset.c==='kw') drillKwType=null; else drillAudClass=null;
-    renderDimTable('kw'); renderDimTable('aud'); refreshTables(); renderDrillChip();
+    if(a.dataset.c==='kw') drillKwType=null; else { drillAudClass=null; drillAudL2=null; }
+    renderDimTable('kw'); renderAudTree(); refreshTables(); renderDrillChip();
   }));
 }
 document.getElementById('kwSearch').addEventListener('input', ()=>renderDetail('kw'));
@@ -1212,7 +1463,7 @@ function applyAll(){
   renderChannelTable();
   drawChannelCompare();
   renderDimTable('kw');
-  renderDimTable('aud');
+  renderAudTree();
   refreshTables();
   renderDrillChip();
 }
@@ -1228,6 +1479,17 @@ bindDate('fDateTo',   v=>{ fDateTo=v;   if(fDateTo<fDateFrom){ fDateFrom=fDateTo
 bindDate('fCmpFrom',  v=>{ fCmpFrom=v;  if(fCmpFrom>fCmpTo){ fCmpTo=fCmpFrom; setDateInput('fCmpTo',fCmpTo);} });
 bindDate('fCmpTo',    v=>{ fCmpTo=v;    if(fCmpTo<fCmpFrom){ fCmpFrom=fCmpTo; setDateInput('fCmpFrom',fCmpFrom);} });
 
+document.getElementById('otherToggle').addEventListener('click', ()=>{
+  const b = document.getElementById('otherBody'), t = document.getElementById('otherToggle');
+  if(b.hasAttribute('hidden')){ b.removeAttribute('hidden'); t.classList.add('open'); }
+  else { b.setAttribute('hidden', ''); t.classList.remove('open'); }
+});
+document.getElementById('fOtherSel').addEventListener('change', e=>{
+  fJcSel = e.target.value ? decodeURIComponent(e.target.value) : '全部';
+  fDwSel = '全部';
+  renderDwJcCaps(); applyAll();
+});
+
 document.getElementById('adviceBtn').addEventListener('click', toggleAdvice);
 document.getElementById('adviceModalClose').addEventListener('click', closeAdvice);
 document.getElementById('adviceModal').addEventListener('click', e=>{ if (e.target.id === 'adviceModal') closeAdvice(); });
@@ -1237,7 +1499,8 @@ document.getElementById('fReset').addEventListener('click', ()=>{
   fDateFrom = allDates[0]; fDateTo = allDates[allDates.length-1];
   fCmpFrom  = allDates.length>1 ? allDates[allDates.length-2] : allDates[0]; fCmpTo = fCmpFrom;
   fJcSel = '全部'; fDwSel = '全部';
-  drillKwType = null; drillAudClass = null;
+  drillKwType = null; drillAudClass = null; drillAudL2 = null;
+  expL1.clear(); expL2.clear();
   audChSel = [];
   setDateInput('fDateFrom', fDateFrom); setDateInput('fDateTo', fDateTo);
   setDateInput('fCmpFrom', fCmpFrom);   setDateInput('fCmpTo', fCmpTo);
@@ -1249,7 +1512,7 @@ document.getElementById('fReset').addEventListener('click', ()=>{
 renderChFilters(); renderChannelTable();
 renderChCmpSel(); drawChannelCompare();
 renderDimFilters('kw');  renderDimTable('kw');
-renderDimFilters('aud'); renderDimTable('aud'); renderAudChFilter();
+renderDimFilters('aud'); renderAudTree(); renderAudChFilter();
 applyAll();
 </script>
 
