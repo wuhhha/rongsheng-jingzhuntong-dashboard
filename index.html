@@ -317,7 +317,7 @@ tr.lv3 td.l{color:var(--ink-2)}
     </div>
     <button id="adviceBtn" class="advice-btn">调整建议</button>
     <div class="fgrp">
-      <div class="flbl">产品定位 / 简称 <span class="flbl-sub">当天有消耗</span></div>
+      <div class="flbl">产品定位 / 简称</div>
       <div class="caps-grouped" id="fDwJcCaps"></div>
       <div class="more-wrap">
         <div class="more-h" id="otherToggle"><span>其他产品<span id="otherCount"></span></span><span class="ar">▾</span></div>
@@ -531,20 +531,22 @@ factsMain.forEach(r=>{
   dwSpend[d]=(dwSpend[d]||0)+sp;
   if(j) jcSpend[j]=(jcSpend[j]||0)+sp;
 });
-/* 当天（数据末日）在 关键词 / 人群 明细中仍有消耗的产品简称 —— 侧栏主区只展示这批 */
+/* 侧栏主区只展示「当天在已归类关键词上有消耗」的产品简称：
+   取数据末日，要求该关键词在 facts_kw_detail 有花费 且 已在 kw_type_map 里归到某个关键词类型
+   （未归类 / 归类为「未匹配」的不算），其余产品一律进底部「其他产品」下拉。 */
 const lastDate = allDates[allDates.length-1] || '';
 const activeJc = new Set();
 (function(){
-  if(!lastDate) return;
-  factsKwD.forEach(r=>{
-    if(String(r['日期'])!==lastDate || num(r['花费'])<=0) return;
-    (kwMap[String(kwNames[r['ki']] ?? '')]||[]).forEach(p=>{ const j=String(p[0]??''); if(j) activeJc.add(j); });
-  });
-  factsAudD.forEach(r=>{
-    if(String(r['日期'])!==lastDate || num(r['花费'])<=0) return;
-    (audMap[String(r['人群ID'])]||[]).forEach(p=>{ const j=String(p[0]??''); if(j) activeJc.add(j); });
-  });
-  /* 兜底：当天确实无明细数据时，退回「全区间有消耗」 */
+  const typed = t => !!(kwTypeMap[t] || []).some(x => x && x !== '未匹配');
+  if(lastDate){
+    factsKwD.forEach(r=>{
+      if(String(r['日期'])!==lastDate || num(r['花费'])<=0) return;
+      const nm = String(kwNames[r['ki']] ?? '');
+      if(!typed(nm)) return;
+      (kwMap[nm]||[]).forEach(p=>{ const j=String(p[0]??''); if(j) activeJc.add(j); });
+    });
+  }
+  /* 兜底：当天确实无「已归类关键词」消耗时，退回全区间有消耗的产品，避免侧栏空掉 */
   if(!activeJc.size) allJc.forEach(j=>{ if((jcSpend[j]||0)>0) activeJc.add(j); });
 })();
 
@@ -633,8 +635,8 @@ const inAudCh = r => !audChSel.length || audChSel.includes(String(r['渠道']||'
 
 /* 筛选掩码
    简称/产品定位 控制所有数据(始终生效);
-   日期区间 控制除 KPI/效率趋势 外的一切;
-   对比日期(区间) 控制除 KPI/效率趋势/对比图 外的一切。 */
+   日期区间 控制除 KPI 外的一切（效率趋势同步裁剪 X 轴, 2026-09-09 起）;
+   对比日期(区间) 控制除 KPI/对比图 外的一切（效率趋势以 参考线 + 虚线 呈现）。 */
 const inJc = r => fJcSel==='全部' || fJcSel===String(r['简称']??'');
 const inDw = r => fDwSel==='全部' || fDwSel===String(r['产品定位']??'');
 const jcDw = rows => rows.filter(r => inJc(r) && inDw(r));
@@ -859,7 +861,9 @@ function mk(id, opt){
 }
 window.addEventListener('resize', () => charts.forEach(c => c.resize()));
 
-/* ---- 效率趋势（指标 + 渠道 双筛选; 仅随 简称/产品定位 变化）---- */
+/* ---- 效率趋势（指标 + 渠道 双筛选; 随 日期区间 / 对比日期 / 简称 / 产品定位 变化）----
+   · 日期区间：X 轴与数据同步裁剪（fDate0 ~ fDate1）
+   · 对比日期：叠加一段等长的对比窗口（以 fCmp 结尾的连续日期）作虚线，tooltip 显示对比值 */
 const EFF_SERIES = {
   '花费':      {color:'#2B6CB0', pct:false, fmt:v=>fmtCompact(v)},
   'CPC':      {color:'#D85A30', pct:false, fmt:v=>'¥'+fmt1(v)},
@@ -892,12 +896,12 @@ function renderEffSel(){
 function summarizeEff(){
   const el = document.getElementById('effDesc'); if(!el) return;
   const k = effMetric, def = METRIC_DEFS[k], ch = effChannel;
-  const rows = maskAll(factsMain);
+  const rows = maskDate(factsMain);
   const src = (ch === '全渠道')
     ? agg(rows, ['日期'])
     : agg(rows.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
   const map = new Map(src.map(r => [r['日期'], r]));
-  const ds = allDates, n = ds.length;
+  const ds = effDates(), n = ds.length;
   if(!n){ el.textContent = ''; return; }
   const win = Math.max(2, Math.min(7, Math.floor(n / 2)));
   const prev = ds.slice(Math.max(0, n - win * 2), n - win);
@@ -939,38 +943,83 @@ function summarizeEff(){
     + `${ch === '全渠道' ? '全渠道' : ch} ${k} ${txt(v2)}${def.abs ? '（日均）' : ''}，${chg}${trend}。`;
 }
 
+/* 趋势 X 轴：按当前「日期区间」裁剪（与其余各表口径一致） */
+const effDates = () => allDates.filter(d => d >= fDateFrom && d <= fDateTo);
+
 function drawEff(){
   const k = effMetric, c = EFF_SERIES[k], ch = effChannel;
-  const dates = allDates;
+  const dates = effDates();
   /* 「全渠道」= 所有渠道合计, 必须按 日期 聚合;
      若按 ['日期','渠道'] 聚合再建 Map, 同一天会被后一个渠道覆盖, 只剩单个渠道的值。 */
-  const rows = maskAll(factsMain);
-  const src = (ch === '全渠道')
-    ? agg(rows, ['日期'])
-    : agg(rows.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
-  const map = new Map(src.map(r => [r['日期'], r]));
+  const rows = maskDate(factsMain);
+  const aggByDate = rs => (ch === '全渠道')
+    ? agg(rs, ['日期'])
+    : agg(rs.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
+  const map = new Map(aggByDate(rows).map(r => [r['日期'], r]));
   const data = dates.map(dt => { const r = map.get(dt); return r ? num(r[k]) : 0; });
+
+  /* 对比区间：口径与表格「对比小字」完全一致
+     · 区间汇总值 → 一条水平参考线（markLine），一眼看出当前区间整体在其上还是其下
+     · 区间 ≥2 天时另画逐日虚线，按「末尾对齐」铺在 X 轴右侧（对比末日对齐主区间末日） */
+  const cmpRows  = maskCmp(factsMain);
+  const cmpDates = allDates.filter(d => d >= fCmpFrom && d <= fCmpTo);
+  const cmap = new Map(aggByDate(cmpRows).map(r => [r['日期'], r]));
+  const cmpTotal = cmpRows.length ? sumObj(cmpRows) : null;
+  const rawCmp = cmpTotal ? cmpTotal[k] : null;
+  const cmpVal = (rawCmp === null || rawCmp === undefined || isNaN(rawCmp)) ? null : num(rawCmp);
+  const cmpData = dates.map((d, i) => {
+    const j = i - (dates.length - cmpDates.length);
+    if(j < 0 || j >= cmpDates.length) return null;
+    const r = cmap.get(cmpDates[j]);
+    return r ? num(r[k]) : null;
+  });
+
+  const main = {name:k,type:'line',smooth:true,symbolSize:6,
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c.color+'33'},{offset:1,color:c.color+'00'}])},
+    lineStyle:{width:2,color:c.color},itemStyle:{color:c.color},
+    data:data};
+  if(cmpVal !== null){
+    main.markLine = {silent:true,symbol:'none',animation:false,
+      lineStyle:{color:'#B0B7C3',type:'dashed',width:1.2},
+      label:{show:true,position:'insideEndTop',color:'#8A9099',fontSize:11,
+        formatter:`对比 ${cmpRangeLabel()}：${c.fmt(cmpVal)}`},
+      data:[{yAxis:cmpVal}]};
+  }
+  const series = [main];
+  let cmpName = '';
+  if(cmpDates.length > 1){
+    cmpName = `对比 ${fmtDate(cmpDates[0])}~${fmtDate(cmpDates[cmpDates.length-1])}`;
+    series.push({name:cmpName,type:'line',smooth:true,symbolSize:4,connectNulls:false,
+      lineStyle:{width:1.5,color:'#9AA3AF',type:'dashed'},itemStyle:{color:'#9AA3AF'},
+      data:cmpData});
+  }
 
   mk('c_eff', {
     tooltip:Object.assign({},TIP,{formatter:p=>{
-      const dt = dates[p[0].dataIndex];
-      const r = map.get(dt);
-      if(!r) return `${dt}<br/>${ch} 当日无数据`;
-      return `${dt}${ch==='全渠道'?'':'　'+ch}<br/>${k} ${c.fmt(num(r[k]))}<br/>`
+      const i = p[0].dataIndex, dt = dates[i], r = map.get(dt);
+      let s = `${dt}${ch==='全渠道'?'':'　'+ch}`;
+      if(!r) s += '<br/>当日无数据';
+      else s += `<br/>${k} ${c.fmt(num(r[k]))}<br/>`
         + `花费 ${fmtAmt(r['花费'])}　总ROI ${fmtInt(r['总ROI'])}<br/>`
         + `CPC ¥${fmt1(r['CPC'])}　CTR ${fmtPct1(r['CTR'])}<br/>`
         + `直接订单行 ${fmtInt(r['直接订单行'])}　直接ROI ${fmtInt(r['直接ROI'])}`;
+      const j = i - (dates.length - cmpDates.length);
+      if(j >= 0 && j < cmpDates.length){
+        const cd = cmpDates[j], cr = cmap.get(cd);
+        s += `<br/><span style="color:#9AA3AF">对比 ${fmtDate(cd)}：${cr ? c.fmt(num(cr[k])) : '无数据'}</span>`;
+      }
+      return s;
     }}),
-    grid:GRID,animationDuration:700,animationEasing:'cubicOut',
+    grid:Object.assign({}, GRID, {top: cmpDates.length ? 44 : 40}),
+    legend: cmpDates.length ? {top:8, right:16, itemWidth:14, itemHeight:6, icon:'roundRect',
+      textStyle:{fontSize:11, color:'#8A9099'}, data:[k, cmpName]} : undefined,
+    animationDuration:700,animationEasing:'cubicOut',
     xAxis:Object.assign({type:'category',data:dates.map(fmtDate)},AXIS),
     yAxis:Object.assign({type:'value',name:k,
       nameTextStyle:{color:'#8A9099',fontSize:11},
       axisLabel:{color:'#8A9099',fontSize:11,
         formatter:v => c.pct ? v : (k==='花费' ? fmtCompact(v) : v)}},AXIS),
-    series:[{name:k,type:'line',smooth:true,symbolSize:6,
-      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c.color+'33'},{offset:1,color:c.color+'00'}])},
-      lineStyle:{width:2,color:c.color},itemStyle:{color:c.color},
-      data:data}]
+    series:series
   });
   summarizeEff();
 }
