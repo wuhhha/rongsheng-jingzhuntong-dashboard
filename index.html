@@ -634,9 +634,8 @@ let audChSel = [];
 const inAudCh = r => !audChSel.length || audChSel.includes(String(r['渠道']||'未匹配'));
 
 /* 筛选掩码
-   简称/产品定位 控制所有数据(始终生效);
-   日期区间 控制除 KPI 外的一切（效率趋势同步裁剪 X 轴, 2026-09-09 起）;
-   对比日期(区间) 控制除 KPI/对比图 外的一切（效率趋势以 参考线 + 虚线 呈现）。 */
+   简称/产品定位 控制所有数据(始终生效, 含效率趋势与明细);
+   日期区间 / 对比日期 控制除 KPI、效率趋势外的一切（含渠道表、维度表、明细表）。 */
 const inJc = r => fJcSel==='全部' || fJcSel===String(r['简称']??'');
 const inDw = r => fDwSel==='全部' || fDwSel===String(r['产品定位']??'');
 const jcDw = rows => rows.filter(r => inJc(r) && inDw(r));
@@ -861,9 +860,8 @@ function mk(id, opt){
 }
 window.addEventListener('resize', () => charts.forEach(c => c.resize()));
 
-/* ---- 效率趋势（指标 + 渠道 双筛选; 随 日期区间 / 对比日期 / 简称 / 产品定位 变化）----
-   · 日期区间：X 轴与数据同步裁剪（fDate0 ~ fDate1）
-   · 对比日期：叠加一段等长的对比窗口（以 fCmp 结尾的连续日期）作虚线，tooltip 显示对比值 */
+/* ---- 效率趋势（指标 + 渠道 双筛选）
+   ⚠️ 刻意不受「日期区间 / 对比日期」控制：始终展示完整窗口走势, 只随 简称 / 产品定位 变化 ---- */
 const EFF_SERIES = {
   '花费':      {color:'#2B6CB0', pct:false, fmt:v=>fmtCompact(v)},
   'CPC':      {color:'#D85A30', pct:false, fmt:v=>'¥'+fmt1(v)},
@@ -892,16 +890,17 @@ function renderEffSel(){
   sel.addEventListener('change', e => { effMetric = e.target.value; drawEff(); });
 }
 
-/* 趋势备注：一句总结近期投放趋势的变化（随 渠道 / 指标 切换实时重算） */
+/* 趋势备注：一句总结近期投放趋势的变化（随 渠道 / 指标 切换实时重算）
+   与趋势表同口径：不受日期区间影响，只看 简称 / 产品定位 下的完整窗口 */
 function summarizeEff(){
   const el = document.getElementById('effDesc'); if(!el) return;
   const k = effMetric, def = METRIC_DEFS[k], ch = effChannel;
-  const rows = maskDate(factsMain);
+  const rows = maskAll(factsMain);
   const src = (ch === '全渠道')
     ? agg(rows, ['日期'])
     : agg(rows.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
   const map = new Map(src.map(r => [r['日期'], r]));
-  const ds = effDates(), n = ds.length;
+  const ds = allDates, n = ds.length;
   if(!n){ el.textContent = ''; return; }
   const win = Math.max(2, Math.min(7, Math.floor(n / 2)));
   const prev = ds.slice(Math.max(0, n - win * 2), n - win);
@@ -943,83 +942,39 @@ function summarizeEff(){
     + `${ch === '全渠道' ? '全渠道' : ch} ${k} ${txt(v2)}${def.abs ? '（日均）' : ''}，${chg}${trend}。`;
 }
 
-/* 趋势 X 轴：按当前「日期区间」裁剪（与其余各表口径一致） */
-const effDates = () => allDates.filter(d => d >= fDateFrom && d <= fDateTo);
-
 function drawEff(){
   const k = effMetric, c = EFF_SERIES[k], ch = effChannel;
-  const dates = effDates();
+  const dates = allDates;
   /* 「全渠道」= 所有渠道合计, 必须按 日期 聚合;
-     若按 ['日期','渠道'] 聚合再建 Map, 同一天会被后一个渠道覆盖, 只剩单个渠道的值。 */
-  const rows = maskDate(factsMain);
-  const aggByDate = rs => (ch === '全渠道')
-    ? agg(rs, ['日期'])
-    : agg(rs.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
-  const map = new Map(aggByDate(rows).map(r => [r['日期'], r]));
+     若按 ['日期','渠道'] 聚合再建 Map, 同一天会被后一个渠道覆盖, 只剩单个渠道的值。
+     ⚠️ 此表刻意不受「日期区间 / 对比日期」控制（始终展示完整 30 天走势），只随 简称 / 产品定位 变化。 */
+  const rows = maskAll(factsMain);
+  const src = (ch === '全渠道')
+    ? agg(rows, ['日期'])
+    : agg(rows.filter(r => String(r['渠道'] || '未匹配') === ch), ['日期']);
+  const map = new Map(src.map(r => [r['日期'], r]));
   const data = dates.map(dt => { const r = map.get(dt); return r ? num(r[k]) : 0; });
-
-  /* 对比区间：口径与表格「对比小字」完全一致
-     · 区间汇总值 → 一条水平参考线（markLine），一眼看出当前区间整体在其上还是其下
-     · 区间 ≥2 天时另画逐日虚线，按「末尾对齐」铺在 X 轴右侧（对比末日对齐主区间末日） */
-  const cmpRows  = maskCmp(factsMain);
-  const cmpDates = allDates.filter(d => d >= fCmpFrom && d <= fCmpTo);
-  const cmap = new Map(aggByDate(cmpRows).map(r => [r['日期'], r]));
-  const cmpTotal = cmpRows.length ? sumObj(cmpRows) : null;
-  const rawCmp = cmpTotal ? cmpTotal[k] : null;
-  const cmpVal = (rawCmp === null || rawCmp === undefined || isNaN(rawCmp)) ? null : num(rawCmp);
-  const cmpData = dates.map((d, i) => {
-    const j = i - (dates.length - cmpDates.length);
-    if(j < 0 || j >= cmpDates.length) return null;
-    const r = cmap.get(cmpDates[j]);
-    return r ? num(r[k]) : null;
-  });
-
-  const main = {name:k,type:'line',smooth:true,symbolSize:6,
-    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c.color+'33'},{offset:1,color:c.color+'00'}])},
-    lineStyle:{width:2,color:c.color},itemStyle:{color:c.color},
-    data:data};
-  if(cmpVal !== null){
-    main.markLine = {silent:true,symbol:'none',animation:false,
-      lineStyle:{color:'#B0B7C3',type:'dashed',width:1.2},
-      label:{show:true,position:'insideEndTop',color:'#8A9099',fontSize:11,
-        formatter:`对比 ${cmpRangeLabel()}：${c.fmt(cmpVal)}`},
-      data:[{yAxis:cmpVal}]};
-  }
-  const series = [main];
-  let cmpName = '';
-  if(cmpDates.length > 1){
-    cmpName = `对比 ${fmtDate(cmpDates[0])}~${fmtDate(cmpDates[cmpDates.length-1])}`;
-    series.push({name:cmpName,type:'line',smooth:true,symbolSize:4,connectNulls:false,
-      lineStyle:{width:1.5,color:'#9AA3AF',type:'dashed'},itemStyle:{color:'#9AA3AF'},
-      data:cmpData});
-  }
 
   mk('c_eff', {
     tooltip:Object.assign({},TIP,{formatter:p=>{
-      const i = p[0].dataIndex, dt = dates[i], r = map.get(dt);
-      let s = `${dt}${ch==='全渠道'?'':'　'+ch}`;
-      if(!r) s += '<br/>当日无数据';
-      else s += `<br/>${k} ${c.fmt(num(r[k]))}<br/>`
+      const dt = dates[p[0].dataIndex];
+      const r = map.get(dt);
+      if(!r) return `${dt}<br/>${ch} 当日无数据`;
+      return `${dt}${ch==='全渠道'?'':'　'+ch}<br/>${k} ${c.fmt(num(r[k]))}<br/>`
         + `花费 ${fmtAmt(r['花费'])}　总ROI ${fmtInt(r['总ROI'])}<br/>`
         + `CPC ¥${fmt1(r['CPC'])}　CTR ${fmtPct1(r['CTR'])}<br/>`
         + `直接订单行 ${fmtInt(r['直接订单行'])}　直接ROI ${fmtInt(r['直接ROI'])}`;
-      const j = i - (dates.length - cmpDates.length);
-      if(j >= 0 && j < cmpDates.length){
-        const cd = cmpDates[j], cr = cmap.get(cd);
-        s += `<br/><span style="color:#9AA3AF">对比 ${fmtDate(cd)}：${cr ? c.fmt(num(cr[k])) : '无数据'}</span>`;
-      }
-      return s;
     }}),
-    grid:Object.assign({}, GRID, {top: cmpDates.length ? 44 : 40}),
-    legend: cmpDates.length ? {top:8, right:16, itemWidth:14, itemHeight:6, icon:'roundRect',
-      textStyle:{fontSize:11, color:'#8A9099'}, data:[k, cmpName]} : undefined,
-    animationDuration:700,animationEasing:'cubicOut',
+    grid:GRID,animationDuration:700,animationEasing:'cubicOut',
     xAxis:Object.assign({type:'category',data:dates.map(fmtDate)},AXIS),
     yAxis:Object.assign({type:'value',name:k,
       nameTextStyle:{color:'#8A9099',fontSize:11},
       axisLabel:{color:'#8A9099',fontSize:11,
         formatter:v => c.pct ? v : (k==='花费' ? fmtCompact(v) : v)}},AXIS),
-    series:series
+    series:[{name:k,type:'line',smooth:true,symbolSize:6,
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c.color+'33'},{offset:1,color:c.color+'00'}])},
+      lineStyle:{width:2,color:c.color},itemStyle:{color:c.color},
+      data:data}]
   });
   summarizeEff();
 }
