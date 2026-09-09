@@ -1377,13 +1377,9 @@ function renderDetail(kind){
   };
   const inR = (r,a,b) => r['日期']>=a && r['日期']<=b;
 
-  const cur = agg(fact.filter(r=> inR(r,fDateFrom,fDateTo) && passJcDw(r[keyCol]) && (isKw || inAudCh(r))), [keyCol]);
-  const cmp = agg(fact.filter(r=> inR(r,fCmpFrom,fCmpTo) && passJcDw(r[keyCol]) && (isKw || inAudCh(r))), [keyCol]);
-  const cmpMap = new Map(cmp.map(r=>[String(r[keyCol]), r]));
-  const tCur = sumObj(cur), tCmp = sumObj(cmp);
-  const totCostCur = num(tCur['花费']), totCostCmp = num(tCmp['花费']);
-
-  let rs = cur.filter(r => {
+  /* 下钻 / 搜索 过滤：当期与对比期共用，保证「总计」与展示行口径一致
+     （旧实现总计用下钻前的全量 cur，导致下钻/搜索后花费等数值不变） */
+  const passDrill = r => {
     if(isKw) return !drillKwType || (classMap[mapKeyOf(r[keyCol])] || []).includes(drillKwType);
     if(drillAudClass) return (classMap[mapKeyOf(r[keyCol])] || []).includes(drillAudClass);
     if(drillAudL2){
@@ -1391,10 +1387,17 @@ function renderDetail(kind){
       return l3s.some(t => (l3ToL2.get(t) || new Set()).has(drillAudL2));
     }
     return true;
-  });
-  if(q) rs = rs.filter(r => nameOf(r[keyCol]).toLowerCase().indexOf(q) >= 0);
+  };
+  const cur = agg(fact.filter(r=> inR(r,fDateFrom,fDateTo) && passJcDw(r[keyCol]) && (isKw || inAudCh(r))), [keyCol]);
+  const cmp = agg(fact.filter(r=> inR(r,fCmpFrom,fCmpTo) && passJcDw(r[keyCol]) && (isKw || inAudCh(r))), [keyCol]);
+  const cmpMap = new Map(cmp.map(r=>[String(r[keyCol]), r]));
+
+  const rs = cur.filter(r => passDrill(r) && (!q || nameOf(r[keyCol]).toLowerCase().indexOf(q) >= 0));
   rs.sort((a,b)=>num(b['花费'])-num(a['花费']));
   const shown = rs.slice(0,150);
+  const cmpRs = cmp.filter(r => passDrill(r) && (!q || nameOf(r[keyCol]).toLowerCase().indexOf(q) >= 0));
+  const tCur = sumObj(rs), tCmp = sumObj(cmpRs);
+  const totCostCur = num(tCur['花费']), totCostCmp = num(tCmp['花费']);
 
   const cols = ['名称','花费占比'].concat(DETAIL_METRICS);
   let h = '<thead><tr>' + cols.map((c,i)=>
