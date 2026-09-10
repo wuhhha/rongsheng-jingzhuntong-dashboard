@@ -625,7 +625,7 @@ const inAudCh = r => !audChSel.length || audChSel.includes(String(r['渠道']||'
 
 /* 筛选掩码
    简称/产品定位 控制所有数据(始终生效, 含效率趋势与明细);
-   日期区间 / 对比日期 控制除 KPI、效率趋势外的一切（含渠道表、维度表、明细表）。 */
+   日期区间 / 对比日期 控制除 效率趋势外的一切（含 KPI、渠道表、维度表、明细表）。 */
 const inJc = r => fJcSel==='全部' || fJcSel===String(r['简称']??'');
 const inDw = r => fDwSel==='全部' || fDwSel===String(r['产品定位']??'');
 const jcDw = rows => rows.filter(r => inJc(r) && inDw(r));
@@ -809,25 +809,24 @@ function metricCell(key, curObj, cmpObj){
   return `<div>${def.fmt(num(curObj[key]))}</div>` + cmpSub(sub);
 }
 
-/* ---- KPI（6 张卡片：当天实时数据, 小字放环比; 仅随 简称/产品定位 变化）---- */
+/* ---- KPI（6 张卡片：受 日期区间 控制聚合; 小字对比 对比日期; 随 简称/产品定位/日期 变化）---- */
 function renderKPIs(){
-  const rows = agg(maskAll(factsMain), ['日期']).sort((a,b)=>a['日期'].localeCompare(b['日期']));
-  if(!rows.length){ document.getElementById('kpis').innerHTML=''; return; }
-  const today = rows[rows.length-1], yest = rows.length>1 ? rows[rows.length-2] : null;
-  const g  = k => num(today[k]);
-  const gy = k => yest ? num(yest[k]) : null;
-  const hb = (t,y) => {
-    if(y===null || !y) return {txt:'环比 —', cls:''};
-    const pct = (t-y)/y*100, up = pct>=0;
-    return {txt:`环比 ${up?'▲':'▼'}${Math.abs(pct).toFixed(1)}%`, cls: up?'roas-hi':'roas-lo'};
+  const cur = sumObjs(maskDate(factsMain));   // 当前 日期区间 聚合（区间选多日则为区间合计）
+  const cmp = sumObjs(maskCmp(factsMain));    // 对比日期 区间 聚合（用于小字对比）
+  const g  = k => num(cur[k]);
+  const gc = k => num(cmp[k]);
+  const note = (t,c) => {
+    if(!c) return {txt:'对比 —', cls:''};
+    const pct = (t-c)/c*100, up = pct>=0;
+    return {txt:`对比 ${up?'▲':'▼'}${Math.abs(pct).toFixed(1)}%`, cls: up?'roas-hi':'roas-lo'};
   };
   const cards = [
-    ['总花费',     fmtAmt(g('花费')),       hb(g('花费'),gy('花费')).txt,         '',   hb(g('花费'),gy('花费')).cls],
-    ['CPC',       '¥'+fmt1(g('CPC')),      hb(g('CPC'),gy('CPC')).txt,           'c2', hb(g('CPC'),gy('CPC')).cls],
-    ['直接订单行', fmtInt(g('直接订单行')), hb(g('直接订单行'),gy('直接订单行')).txt,'c3', hb(g('直接订单行'),gy('直接订单行')).cls],
-    ['直接ROI',   fmtInt(g('直接ROI')),    hb(g('直接ROI'),gy('直接ROI')).txt,    'c4', hb(g('直接ROI'),gy('直接ROI')).cls],
-    ['直接CVR',   fmtPct1(g('直接CVR')),   hb(g('直接CVR'),gy('直接CVR')).txt,    'c5', hb(g('直接CVR'),gy('直接CVR')).cls],
-    ['直接加购率', fmtPct1(g('直接加购率')), hb(g('直接加购率'),gy('直接加购率')).txt,'c6', hb(g('直接加购率'),gy('直接加购率')).cls],
+    ['总花费',     fmtAmt(g('花费')),       note(g('花费'),gc('花费')).txt,         '',   note(g('花费'),gc('花费')).cls],
+    ['CPC',       '¥'+fmt1(g('CPC')),      note(g('CPC'),gc('CPC')).txt,           'c2', note(g('CPC'),gc('CPC')).cls],
+    ['直接订单行', fmtInt(g('直接订单行')), note(g('直接订单行'),gc('直接订单行')).txt,'c3', note(g('直接订单行'),gc('直接订单行')).cls],
+    ['直接ROI',   fmtInt(g('直接ROI')),    note(g('直接ROI'),gc('直接ROI')).txt,    'c4', note(g('直接ROI'),gc('直接ROI')).cls],
+    ['直接CVR',   fmtPct1(g('直接CVR')),   note(g('直接CVR'),gc('直接CVR')).txt,    'c5', note(g('直接CVR'),gc('直接CVR')).cls],
+    ['直接加购率', fmtPct1(g('直接加购率')), note(g('直接加购率'),gc('直接加购率')).txt,'c6', note(g('直接加购率'),gc('直接加购率')).cls],
   ];
   document.getElementById('kpis').innerHTML = cards.map(c =>
     `<div class="kpi ${c[3]}"><div class="label">${c[0]}</div><div class="val">${c[1]}</div><div class="note ${c[4]}">${c[2]}</div></div>`
