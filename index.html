@@ -346,6 +346,15 @@ tr.lv3 td.l{color:var(--ink-2)}
       </div>
     </div>
 
+    <div class="grid one">
+      <div class="card">
+        <h2>产品定位数据情况</h2>
+        <div class="desc">点击 ▸ 展开各产品定位下的简称明细；指标可勾选。本表随 日期区间 / 对比日期 / 顶部筛选 联动。</div>
+        <div class="ch-filterbar" id="dwFilters"></div>
+        <div class="tw dim-tw"><table id="dwDimTable"></table></div>
+      </div>
+    </div>
+
     <div class="grid" style="grid-template-columns:7fr 3fr">
       <div class="card">
         <h2>各渠道数据情况</h2>
@@ -1334,6 +1343,112 @@ function renderAudTree(){
   }));
 }
 
+/* ---- 产品定位数据情况（树形：产品定位 → 简称，默认折叠）----
+   · 受 日期区间 / 对比日期 / 顶部 产品定位·简称 筛选 控制（与 渠道表/维度表 同口径）
+   · 指标可勾选（复用 CH_EXTRAS，与渠道表一致）
+   · 产品定位默认按 DW_ORDER 业务顺序展示；点表头可改按指标排序 */
+let dwSortKey = '产品定位', dwSortDir = 'asc';
+const expDw = new Set();
+const dwSel  = new Set(['CPC','直接ROI','直接CVR','直接加购率','总ROI']);
+
+function dwTree(rows){
+  const root = new Map();
+  const add = (o, r) => { BASE.forEach(c => o[c] = num(o[c]) + num(r[c])); };
+  rows.forEach(r => {
+    const d = String(r['产品定位'] || '').trim() || '未匹配';
+    const j = String(r['简称'] || '').trim() || '未匹配';
+    if(!root.has(d)) root.set(d, {name:d, o:{}, ch:new Map()});
+    const n1 = root.get(d); add(n1.o, r);
+    if(!n1.ch.has(j)) n1.ch.set(j, {name:j, o:{}});
+    add(n1.ch.get(j).o, r);
+  });
+  const col = (dwSortKey === '消耗' || dwSortKey === '消耗占比') ? '花费' : dwSortKey;
+  const cmpNode = (a, b) => dwSortDir === 'asc' ? num(a.o[col]) - num(b.o[col]) : num(b.o[col]) - num(a.o[col]);
+  const dwIdx = d => { const i = DW_ORDER.indexOf(d); return i < 0 ? 999 : i; };
+  const out = [...root.values()].map(n1 => ({
+    name: n1.name, o: withRates(n1.o),
+    ch: [...n1.ch.values()].map(n2 => ({name: n2.name, o: withRates(n2.o)}))
+  }));
+  out.sort((a, b) => {
+    if(dwSortKey === '产品定位'){
+      const r = dwIdx(a.name) - dwIdx(b.name);
+      if(r) return dwSortDir === 'asc' ? r : -r;
+      return a.name.localeCompare(b.name, 'zh');
+    }
+    return cmpNode(a, b);
+  });
+  out.forEach(n1 => n1.ch.sort(cmpNode));
+  return out;
+}
+
+function renderDwFilters(){
+  document.getElementById('dwFilters').innerHTML = CH_EXTRAS.map(m =>
+    `<label><input type="checkbox" data-m="${m[0]}" ${dwSel.has(m[0])?'checked':''}> ${m[1]}</label>`
+  ).join('');
+  document.querySelectorAll('#dwFilters input').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const m = e.target.dataset.m;
+      if(e.target.checked) dwSel.add(m); else dwSel.delete(m);
+      renderDwTree();
+    });
+  });
+}
+
+function renderDwTree(){
+  const el = document.getElementById('dwDimTable'); if(!el) return;
+  const curRows = maskDate(factsMain);
+  const cmpRows = maskCmp(factsMain);
+  const cur = dwTree(curRows), cmp = dwTree(cmpRows);
+  /* 对比值索引：产品定位 / 产品定位|简称 */
+  const idx = new Map();
+  cmp.forEach(n1 => { idx.set(n1.name, n1.o);
+    n1.ch.forEach(n2 => idx.set(n1.name + '\u0001' + n2.name, n2.o)); });
+  const extras = CH_EXTRAS.filter(m => dwSel.has(m[0]));
+  const totCur = cur.reduce((a, n) => a + num(n.o['花费']), 0);
+  const totCmp = cmp.reduce((a, n) => a + num(n.o['花费']), 0);
+  const cells = (o, co) => {
+    const pc = totCur ? num(o['花费']) / totCur * 100 : 0;
+    const pp = totCmp ? num(co ? co['花费'] : 0) / totCmp * 100 : 0;
+    let s = `<td>${fmtPct1(pc)}${cmpSub(fmtPct1(pp))}</td>`
+          + `<td>${fmtAmt(o['花费'])}${cmpSub(fmtAmt(co ? co['花费'] : 0))}</td>`;
+    extras.forEach(m => { s += `<td>${metricCell(m[0], o, co)}</td>`; });
+    return s;
+  };
+  const cols = ['产品定位', '消耗占比', '消耗'].concat(extras.map(m => m[0]));
+  let h = '<thead><tr>' + cols.map(c => {
+    const key = (c === '产品定位') ? '产品定位' : c;
+    const on = dwSortKey === key;
+    return `<th class="${c === '产品定位' ? 'l' : ''}" data-k="${key}" style="${on ? 'color:#2B6CB0;font-weight:600' : ''}">${c}${on ? (dwSortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`;
+  }).join('') + '</tr></thead><tbody>';
+  cur.forEach(n1 => {
+    const o1 = expDw.has(n1.name);
+    h += `<tr class="lv1"><td class="l"><span class="tgl ${o1 ? 'open' : ''}" data-t1="${encodeURIComponent(n1.name)}">${o1 ? '▾' : '▸'}</span><span>${n1.name}</span></td>`
+       + cells(n1.o, idx.get(n1.name)) + '</tr>';
+    if(!o1) return;
+    n1.ch.forEach(n2 => {
+      h += `<tr class="lv2"><td class="l" style="padding-left:26px"><span>${n2.name}</span></td>`
+         + cells(n2.o, idx.get(n1.name + '\u0001' + n2.name)) + '</tr>';
+    });
+  });
+  const tCur = sumObj(curRows), tCmp = sumObj(cmpRows);
+  let tc = `<td class="l"><b>总计</b></td><td>100%${cmpSub('100%')}</td>`
+         + `<td><b>${fmtAmt(tCur['花费'])}</b>${cmpSub(fmtAmt(tCmp['花费']))}</td>`;
+  extras.forEach(m => { tc += `<td><b>${metricCell(m[0], tCur, tCmp)}</b></td>`; });
+  h += `<tr style="background:#F2F4F7">${tc}</tr></tbody>`;
+  el.innerHTML = h;
+  el.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+    const c = th.dataset.k;
+    if(dwSortKey === c){ dwSortDir = dwSortDir === 'asc' ? 'desc' : 'asc'; }
+    else { dwSortKey = c; dwSortDir = (c === '产品定位') ? 'asc' : 'desc'; }
+    renderDwTree();
+  }));
+  el.querySelectorAll('.tgl[data-t1]').forEach(s => s.addEventListener('click', () => {
+    const v = decodeURIComponent(s.dataset.t1);
+    if(expDw.has(v)) expDw.delete(v); else expDw.add(v);
+    renderDwTree();
+  }));
+}
+
 /* 人群渠道多选筛选：控制 人群分类数据 + 人群明细（与上方指标筛选并列，置于 h2 右上角）
    渠道清单取自「人群」事实表本身（快车/站外/购物触点…），避免列出无人群数据的渠道 */
 function renderAudChFilter(){
@@ -1474,6 +1589,7 @@ function applyAll(){
   drawChannelCompare();
   renderDimTable('kw');
   renderAudTree();
+  renderDwTree();
   refreshTables();
   renderDrillChip();
 }
@@ -1511,6 +1627,7 @@ document.getElementById('fReset').addEventListener('click', ()=>{
   fJcSel = '全部'; fDwSel = '全部';
   drillKwType = null; drillAudClass = null; drillAudL2 = null;
   expL1.clear(); expL2.clear();
+  expDw.clear();
   audChSel = [];
   setDateInput('fDateFrom', fDateFrom); setDateInput('fDateTo', fDateTo);
   setDateInput('fCmpFrom', fCmpFrom);   setDateInput('fCmpTo', fCmpTo);
@@ -1523,6 +1640,7 @@ renderChFilters(); renderChannelTable();
 renderChCmpSel(); drawChannelCompare();
 renderDimFilters('kw');  renderDimTable('kw');
 renderDimFilters('aud'); renderAudTree(); renderAudChFilter();
+renderDwFilters(); renderDwTree();
 applyAll();
 </script>
 
