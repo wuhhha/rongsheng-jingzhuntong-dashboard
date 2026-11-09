@@ -1,0 +1,10 @@
+/core_a.js
+  Cache-Control: public, max-age=86400
+/core_b.js
+  Cache-Control: public, max-age=86400
+/detail.js
+  Cache-Control: public, max-age=86400
+/detail_hist.js
+  Cache-Control: public, max-age=86400
+/echarts.min.js
+  Cache-Control: public, max-age=86400
