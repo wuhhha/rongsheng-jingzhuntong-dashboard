@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=807b1966ca"></script><script src="core_b.js?v=807b1966ca"></script>
+<script src="core_a.js?v=0bf5d7ba54"></script><script src="core_b.js?v=0bf5d7ba54"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1038,7 +1038,7 @@ function showFatal(msg){  const d = document.createElement('div');
 let DS, Q;
 try {
   DS = unpackDS(await gunzipJSON(((window.__CORE_PACK_A__||'')+(window.__CORE_PACK_B__||''))));
-  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 347612 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 4 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 1 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 4 条","花费与展现匹配: 有花费无展现 1 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
+  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 347645 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 4 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 1 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 4 条","花费与展现匹配: 有花费无展现 1 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
 } catch (e) {
   showFatal(e && e.message ? e.message : e);
   return;
@@ -1046,21 +1046,21 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=415c626cf8";
+const LAZY_DETAIL = "detail.js?v=7be08178e9";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=7d462e4b13";
+const LAZY_HIST = "detail_hist.js?v=6ae9840b93";
 /* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
    首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
    null = 本地版（同期已全量内嵌）。 */
-const LAZY_YOY = "yoy.js?v=88a134b292";
+const LAZY_YOY = "yoy.js?v=410f374885";
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "25553b7e68cd";
-const HIST_VER   = "ce61bff85475";
+const DETAIL_VER = "bd9ff4b7f646";
+const HIST_VER   = "e5ca3c885b88";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
