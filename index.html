@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=d195fb940d"></script><script src="core_b.js?v=d195fb940d"></script>
+<script src="core_a.js?v=c710fff9d4"></script><script src="core_b.js?v=c710fff9d4"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1046,17 +1046,17 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=d6d3fc7b53";
+const LAZY_DETAIL = "detail.js?v=4590450fc5";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=8b3a258083";
+const LAZY_HIST = "detail_hist.js?v=43a8dd5bd1";
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "f95cfddf88b0";
-const HIST_VER   = "ccdaaeac6a3a";
+const DETAIL_VER = "7ad1b402d210";
+const HIST_VER   = "f74074b8ecd7";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -5032,20 +5032,28 @@ function initCopyButtons(){
   });
 }
 
-/* 等 ECharts 就绪再首屏渲染（库已移到 </body> 前，正常情况早已加载完成；最多等 30s 兜底） */
-const _ecOk = await waitEcharts(30000);
-if (!_ecOk) console.warn('[看板] ECharts 未在 30s 内就绪，图表区域可能为空');
-
+/* 首屏分两批渲染（2026-11-10 提速）：
+   ECharts 已改为 async 外链，慢链路下要等几秒才到；此前所有表格/KPI 都排在与库
+   之后（`await waitEcharts` 在渲染之前），导致「数据明明已经在手里，却整页空白
+   等图表库」——实测弱网下要等 20s 才看到第一个数字。
+   现改为：不依赖图表库的部分（KPI / 各表格 / 筛选器 / 树）先渲染并撤掉加载条，
+   图表等库到达后再画。applyAll() 仍会全量刷新一次，幂等，口径不受影响。 */
 renderChFilters(); renderZwCatFilters(); renderChannelTable();
 renderDayFilters(); renderDayTable();
-renderChCmpSel(); drawChannelCompare();
 renderDimFilters('kw');  renderKwTypeFilters(); renderDimTable('kw');
 renderDimFilters('aud'); renderAudTree(); renderAudChFilter();
 renderDwFilters(); renderDwTree();
+renderKPIs(); renderSummary(); renderAlerts();
+hideBootMask();          // 数据已可见 → 先撤掉顶部加载条
+
+/* 等 ECharts 就绪再画图（库已 async 外链；最多等 30s 兜底） */
+const _ecOk = await waitEcharts(30000);
+if (!_ecOk) console.warn('[看板] ECharts 未在 30s 内就绪，图表区域可能为空');
+
+renderChCmpSel(); drawChannelCompare();
 applyAll();
 initCopyButtons();   // 表格标题右侧的「复制」按钮（放在表格首次渲染之后，幂等）
 renderComp();        // 竞品页（首屏预渲染一次，页签切过去时再用 renderComp 刷新）
-hideBootMask();      // 首屏已渲染 → 移除加载遮罩（2026-11-07）
 
 /* 首屏渲染完成后异步拉取明细事实表（分文件模式）；到达后回填并重渲染明细表 / 调整建议。
    ⚠️ 2026-10-15 修复：原先 onload 里 catch(e){} **静默吞错** —— 一旦 detail.js 因
