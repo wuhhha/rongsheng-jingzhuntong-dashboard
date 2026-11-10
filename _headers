@@ -6,6 +6,8 @@
   Cache-Control: public, max-age=31536000, immutable
 /detail_hist.js
   Cache-Control: public, max-age=31536000, immutable
+/yoy.js
+  Cache-Control: public, max-age=31536000, immutable
 /echarts.min.js
   Cache-Control: public, max-age=31536000, immutable
 /*

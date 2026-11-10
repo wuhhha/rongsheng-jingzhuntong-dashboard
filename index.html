@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=c710fff9d4"></script><script src="core_b.js?v=c710fff9d4"></script>
+<script src="core_a.js?v=dfe9c61932"></script><script src="core_b.js?v=dfe9c61932"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1046,17 +1046,21 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=4590450fc5";
+const LAZY_DETAIL = "detail.js?v=69d5e092ba";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=43a8dd5bd1";
+const LAZY_HIST = "detail_hist.js?v=b24a926e28";
+/* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
+   首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
+   null = 本地版（同期已全量内嵌）。 */
+const LAZY_YOY = "yoy.js?v=d61eab1cb3";
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "7ad1b402d210";
-const HIST_VER   = "f74074b8ecd7";
+const DETAIL_VER = "936dd579f2a5";
+const HIST_VER   = "0f760dcd2475";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -1180,7 +1184,9 @@ function agg(rows, groupCols){
 function sumObj(rows){ const o={}; BASE.forEach(c=>o[c]=rows.reduce((a,r)=>a+num(r[c]),0)); return withRates(o); }
 
 /* ---- 数据集 ---- */
-const factsMain = DS.facts_main ? toObjsR(DS.facts_main) : [];
+/* factsMain / factsKw 用 let（2026-11-10）：同期行改由 yoy.js 按需到达，
+   到达后需要把 2025 行并回并重建这两个数组，const 无法重赋值。 */
+let factsMain = DS.facts_main ? toObjsR(DS.facts_main) : [];
 /* 下单维度是否可用（2026-10-08）：事实表带「直接下单行」且至少一行非空。
    ⚠️ 只有主报表账户有下单报表；其他账户范围内会整体为空 → 相关列/卡显示「—」。 */
 const ORD_SRC = ['直接下单行','直接下单金额','总下单行','总下单金额'];
@@ -1192,7 +1198,7 @@ const ZW_CHANNEL = '站外';
 /* 站外分类全量（用于筛选条与弹窗分组） */
 const ZW_CATS = [...new Set(factsZw.map(r => String(r['站外分类'] || '')))].filter(Boolean)
   .sort((a, b) => a.localeCompare(b, 'zh'));
-const factsKw   = DS.facts_kw   ? toObjsR(DS.facts_kw)   : [];
+let factsKw     = DS.facts_kw   ? toObjsR(DS.facts_kw)   : [];
 const factsAud  = DS.facts_aud  ? toObjsR(DS.facts_aud)  : [];
 /* ---- 同期（去年同期，2026-10-16 新增）----------------------------------------
    2025 年 10/11 月的「渠道(投放进度)+关键词」由 ingest 并入 facts_main / facts_kw，
@@ -1203,8 +1209,15 @@ const factsAud  = DS.facts_aud  ? toObjsR(DS.facts_aud)  : [];
 const YOY_DATES = (DS.yoy && DS.yoy.dates) ? DS.yoy.dates.slice().sort() : [];
 const YOY_SET   = new Set(YOY_DATES);
 const isYoyDate = d => YOY_SET.size > 0 && YOY_SET.has(String(d || '').trim());
-const factsMainWin = YOY_SET.size ? factsMain.filter(r => !isYoyDate(r['日期'])) : factsMain;
-const factsKwWin   = YOY_SET.size ? factsKw.filter(r => !isYoyDate(r['日期']))   : factsKw;
+let factsMainWin = YOY_SET.size ? factsMain.filter(r => !isYoyDate(r['日期'])) : factsMain;
+let factsKwWin   = YOY_SET.size ? factsKw.filter(r => !isYoyDate(r['日期']))   : factsKw;
+/* 同期行到达后重建上面四个数组（factsMain/factsKw 追加 2025 行 → 两个 *Win 重新过滤） */
+function rebuildFactsFromDS(){
+  factsMain    = DS.facts_main ? toObjsR(DS.facts_main) : [];
+  factsKw      = DS.facts_kw   ? toObjsR(DS.facts_kw)   : [];
+  factsMainWin = YOY_SET.size ? factsMain.filter(r => !isYoyDate(r['日期'])) : factsMain;
+  factsKwWin   = YOY_SET.size ? factsKw.filter(r => !isYoyDate(r['日期']))   : factsKw;
+}
 const kws       = DS.keywords_all   ? toObjsR(DS.keywords_all)   : [];
 const auds      = DS.audiences_all  ? toObjsR(DS.audiences_all)  : [];
 /* 明细事实表(关键词/人群 × 日期): 供明细表按 日期区间 / 对比日期 聚合 */
@@ -4199,13 +4212,18 @@ if (quickBar){
 }
 const cmpBar = document.getElementById('cmpQuick');
 if (cmpBar){
-  cmpBar.querySelectorAll('.qr').forEach(btn => btn.addEventListener('click', ()=>{
+  cmpBar.querySelectorAll('.qr').forEach(btn => btn.addEventListener('click', async ()=>{
     const r = yoyRange(fDateFrom, fDateTo);
     if (!r[0]){
       cpToast(YOY_DATES.length
         ? ('同期数据仅覆盖 ' + fmtDate(YOY_DATES[0]) + '~' + fmtDate(YOY_DATES[YOY_DATES.length-1])
            + '，与当前「日期」区间无重叠')
         : '本期无同期（去年同期）数据');
+      return;
+    }
+    /* 同期行已拆到 yoy.js：没就绪就先拉，拉不到就明说，绝不按 0 算出一个假同比 */
+    if (!await loadYoy()){
+      cpToast('同期数据加载失败，请检查网络后重试');
       return;
     }
     fCmpFrom = r[0]; fCmpTo = r[1];
@@ -5083,6 +5101,7 @@ function loadDetail(){
       fillDetailFacts();
       detailReady = true; detailLoading = false; detailFailed = false;
       refreshTables();
+      prefetchYoy();          /* 明细已到 → 再预取同期包，避免抢首屏带宽 */
       const am = document.getElementById('adviceModal');
       if (am && !am.hasAttribute('hidden')) renderAdvicePanel();
     }catch(e){ failDetail(); }
@@ -5101,6 +5120,60 @@ function failDetail(){
 }
 /* 供表内「点此重试」链接调用：重置计数后立即重拉 */
 window.__retryDetail = function(){ detailTried = 0; detailFailed = false; loadDetail(); };
+
+/* ---- 同期包懒加载（2026-11-10 首屏提速）------------------------------------
+   2025 年同期行已从 core 拆到 yoy.js（首屏省约 1MB）。点「对比日期→同比」前
+   必须把同期行合并回 facts_main / facts_kw，否则对比区间聚合会返回 0（假数）。
+   策略：① 明细到货、页面空闲时后台预取（绝大多数情况下用户点之前已就绪）；
+        ② 点「同比」时若尚未就绪，当场 await（最多等一次下载），失败则明确提示，
+           绝不静默按 0 计算 —— 口径宁缺毋滥。 */
+let yoyReady = false, yoyP = null;
+function mergeYoyPack(d){
+  let n = 0;
+  Object.keys(d || {}).forEach(function(k){
+    const t = d[k];
+    if (!t || !t.rows || !t.rows.length || !DS[k] || !DS[k].rows) return;
+    DS[k].rows = DS[k].rows.concat(t.rows);
+    n += t.rows.length;
+  });
+  if (n) rebuildFactsFromDS();
+  return n;
+}
+function loadYoy(){
+  if (!LAZY_YOY || yoyReady) return Promise.resolve(true);
+  if (yoyP) return yoyP;                    // 预取与点击共用同一个进行中的请求
+  yoyP = new Promise(function(res){
+    const s = document.createElement('script');
+    s.src = LAZY_YOY;
+    s.onload = async function(){
+      try{
+        const d = await unpackLazy(window.__YOY_PACK__);
+        const n = mergeYoyPack(d);
+        if (!n) throw new Error('同期包内容为空');
+        yoyReady = true;
+        yoyP = null;
+        res(true);
+      }catch(e){
+        console.warn('[看板] 同期包解包失败：', e && e.message);
+        yoyP = null; res(false);
+      }
+    };
+    s.onerror = function(){
+      console.warn('[看板] 同期包下载失败（yoy.js），「同比」暂不可用');
+      yoyP = null; res(false);
+    };
+    document.head.appendChild(s);
+  });
+  return yoyP;
+}
+/* 后台预取：明细到达后再拉，避免和明细抢带宽；12s 兜底（明细失败也要能预取） */
+let yoyPrefetched = false;
+function prefetchYoy(){
+  if (yoyPrefetched || !LAZY_YOY) return;
+  yoyPrefetched = true;
+  loadYoy();
+}
+setTimeout(prefetchYoy, 12000);
 if (LAZY_DETAIL) loadDetail();
 
 /* 明细表全屏放大：点击右上角按钮，卡片变固定浮层，表格一次看更多行 */
