@@ -713,7 +713,7 @@ footer{opacity:.9}
 <div id="bootMask">
   <span class="bm-dot"></span>
   <span class="bm-t">正在加载看板数据…</span>
-  <span class="bm-s">首屏约 1.8MB，慢链路下需 2~3 分钟，到位后自动进入</span>
+  <span class="bm-s">首屏约 2MB（数据 1.5MB + 图表库 0.2MB），到位后自动进入</span>
   <span class="bm-t2" id="bootElapsed">0 秒</span>
 </div>
 <script>
@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=b56f5e643f"></script><script src="core_b.js?v=b56f5e643f"></script>
+<script src="core_a.js?v=5def0ed10e"></script><script src="core_b.js?v=5def0ed10e"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1046,17 +1046,17 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=ee281a5af1";
+const LAZY_DETAIL = "detail.js?v=8d31ab5522";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=dd67363d0b";
+const LAZY_HIST = "detail_hist.js?v=9b5654a530";
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "6e3f8ce9d2a4";
-const HIST_VER   = "ea522cccf504";
+const DETAIL_VER = "e71bd374d929";
+const HIST_VER   = "1a9a8e08fedc";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -5175,6 +5175,6 @@ document.addEventListener('keydown', function(e){
 </script>
 <!-- ECharts：放在文档末尾，避免 470KB 库阻塞 <head> 解析（首屏优化，2026-11-07）。
      build_dashboard.py 的 inline_echarts() 会按这个标签原地替换为内联库，位置不变。 -->
-<script src="echarts.min.js?v=fd99176dd2"></script>
+<script src="echarts.min.js?v=fd99176dd2" async></script>
 </body>
 </html>
