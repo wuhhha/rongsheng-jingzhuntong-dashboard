@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=9f35a8a6bc"></script><script src="core_b.js?v=9f35a8a6bc"></script>
+<script src="core_a.js?v=d1f94baa06"></script><script src="core_b.js?v=d1f94baa06"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1046,21 +1046,21 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=13eccd266a";
+const LAZY_DETAIL = "detail.js?v=1bf9fef699";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=190ac6119f";
+const LAZY_HIST = "detail_hist.js?v=9b1212ea05";
 /* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
    首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
    null = 本地版（同期已全量内嵌）。 */
-const LAZY_YOY = "yoy.js?v=6dd21fe62f";
+const LAZY_YOY = "yoy.js?v=9cc3acfb6d";
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "9b793bbf07bb";
-const HIST_VER   = "1ad28db10da6";
+const DETAIL_VER = "f4924b6e8e9c";
+const HIST_VER   = "2f72623b6314";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
