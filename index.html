@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=bab9f426a8"></script><script src="core_b.js?v=bab9f426a8"></script>
+<script src="core_a.js?v=f4e105864a"></script><script src="core_b.js?v=f4e105864a"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1046,21 +1046,32 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=bbeeed0d23";
+const LAZY_DETAIL = "detail.js?v=6e75f8cde7";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=4006f1618a";
+const LAZY_HIST = "detail_hist.js?v=54550aa5f9";
 /* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
    首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
    null = 本地版（同期已全量内嵌）。 */
-const LAZY_YOY = "yoy.js?v=5f04f5f7f9";
+const LAZY_YOY = "yoy.js?v=72c1de62bf";
+/* 人群事实表外置（2026-11-12 首屏瘦身）：facts_aud 从核心包拆出，单独落 facts_aud.js。
+   动因：核心包 gzip 1218KB 里 1069KB(88%) 是 facts_aud（65216 行 = 日期×三级分类×简称×定位），
+        而首屏 13 张 KPI、趋势图一行都不用 —— 它只服务「人群分类」维度表、
+        「调整建议」面板和渠道下拉的枚举。拆出后核心包降到 ~150KB。
+   策略：首屏渲染完成后空闲预取（与 detail.js 错峰），到货后重建 factsAud 并重绘；口径零变化。
+   null = 本地版（全量内嵌）。 */
+const LAZY_AUD = "facts_aud.js?v=0204f9b147";
+const AUD_VER  = "8ad4e31ac6b8";
+/* 状态变量在此声明（而非文件末尾）：首屏 refreshTables 早于底部懒加载代码执行，
+   若放在末尾会踩 let 的 TDZ，直接抛 ReferenceError 白屏。 */
+let audReady = !LAZY_AUD, audLoading = false, audFailed = false, audTried = 0;
 /* 明细包完整性校验值（build 侧写入 = 该包 b64 内容的 sha256 前 12 位）。
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "ec35feef6407";
-const HIST_VER   = "735ad5fa3a3c";
+const DETAIL_VER = "5ca9cca6e56f";
+const HIST_VER   = "75907a30795e";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -1199,7 +1210,9 @@ const ZW_CHANNEL = '站外';
 const ZW_CATS = [...new Set(factsZw.map(r => String(r['站外分类'] || '')))].filter(Boolean)
   .sort((a, b) => a.localeCompare(b, 'zh'));
 let factsKw     = DS.facts_kw   ? toObjsR(DS.facts_kw)   : [];
-const factsAud  = DS.facts_aud  ? toObjsR(DS.facts_aud)  : [];
+/* 人群事实表（2026-11-12 起从核心包外置）：懒加载到达前为空数组，
+   到达后由 loadAud() 重建并同步到 DIMTABS.aud.fact，故必须 let 而非 const。 */
+let factsAud    = DS.facts_aud  ? toObjsR(DS.facts_aud)  : [];
 /* ---- 同期（去年同期，2026-10-16 新增）----------------------------------------
    2025 年 10/11 月的「渠道(投放进度)+关键词」由 ingest 并入 facts_main / facts_kw，
    **但日期不进主时间轴** —— 本数组给出同期日期集合，用来把
@@ -3056,7 +3069,20 @@ function renderDimFilters(k){
 }
 
 function renderDimTable(k){
-  const cfg = DIMTABS[k], fact = cfg.fact, dimCols = cfg.names;
+  const cfg = DIMTABS[k], dimCols = cfg.names;
+  /* 人群包（facts_aud.js）未到货：触发加载 + 占位提示，避免空白表格被误读成「没数据」 */
+  if (k === 'aud' && !audReady && LAZY_AUD){
+    loadAud();
+    const el0 = document.getElementById(cfg.table);
+    if (el0){
+      el0.innerHTML = '<tbody><tr><td class="l" style="padding:18px 8px;color:#718096">'
+        + (audFailed ? '⚠️ 人群数据包加载失败，点击此处重试' : '人群数据加载中…')
+        + '</td></tr></tbody>';
+      el0.onclick = audFailed ? function(){ window.__retryAud(); } : null;
+    }
+    return;
+  }
+  const fact = cfg.fact;
   /* 分品目标占比：仅当产品筛选唯一确定一个简称，且该表按 名称列 对齐目标时才有值 */
   const tgtKeyCol = dimCols[0];
   const tgtJc = (k === 'kw') ? tgtProd() : null;
@@ -3203,6 +3229,16 @@ function audTree(rows){
 function renderAudTree(){
   const cfg = DIMTABS.aud;
   const el = document.getElementById(cfg.table); if(!el) return;
+  /* 人群包未到货：触发加载 + 占位（空白树容易被误读成「人群数据为空」） */
+  if (!audReady && LAZY_AUD){
+    loadAud();
+    el.innerHTML = '<tbody><tr><td class="l" style="padding:18px 8px;color:#718096">'
+      + (audFailed ? '⚠️ 人群数据包加载失败，点击此处重试' : '人群数据加载中…')
+      + '</td></tr></tbody>';
+    el.onclick = audFailed ? function(){ window.__retryAud(); } : null;
+    return;
+  }
+  el.onclick = null;
   /* 分品目标占比：只挂在一级分类行上（源表只给到一级），二级/三级显示「—」 */
   const tgtJc = tgtProd();
   const curRows = maskDate(factsAud).filter(inAudCh);
@@ -3547,6 +3583,12 @@ function renderDwTree(){
 function renderAudChFilter(){
   const el = document.getElementById('audChFilter');
   if(!el) return;
+  /* 人群包未到货：渠道清单取不到 → 先给占位，到货后 loadAud() 会重绘本函数 */
+  if (!audReady && LAZY_AUD){
+    loadAud();
+    el.innerHTML = '<span class="lab">渠道</span><span style="color:#718096">人群数据加载中…</span>';
+    return;
+  }
   const audChs = [...new Set(factsAud.map(r => String(r['渠道']||'未匹配')))]
     .sort((a,b)=>a.localeCompare(b,'zh'));
   el.innerHTML = '<span class="lab">渠道</span>' + audChs.map(c =>
@@ -5181,6 +5223,65 @@ function prefetchYoy(){
   loadYoy();
 }
 setTimeout(prefetchYoy, 12000);
+
+/* ---- 人群事实表懒加载（2026-11-12 首屏瘦身）--------------------------------
+   facts_aud 独占核心包 88% 体积，却与首屏 KPI / 趋势图无关（只服务人群分类维度表、
+   调整建议、渠道下拉枚举）。首屏渲染完成后错峰拉取，到货重建 + 重绘，口径零变化。
+   失败自动重试 1 次（带 cache-buster），仍失败则告警而非静默空白。 */
+function loadAud(){
+  if (audReady || audLoading || !LAZY_AUD || audTried >= 2) return;
+  audLoading = true; audFailed = false;
+  const s = document.createElement('script');
+  s.src = audTried === 0 ? LAZY_AUD
+    : LAZY_AUD + (LAZY_AUD.indexOf('?') >= 0 ? '&' : '?') + '_r=' + Date.now();
+  s.onload = async function(){
+    try{
+      if (AUD_VER && window.__AUD_PACK_VER__ !== AUD_VER)
+        throw new Error('人群数据包完整性校验不通过（可能被截断或命中旧缓存）');
+      const d = await unpackLazy(window.__AUD_PACK__);
+      if (!d || !d.facts_aud || !d.facts_aud.rows || !d.facts_aud.rows.length)
+        throw new Error('人群数据包为空');
+      DS.facts_aud = d.facts_aud;
+      factsAud = toObjsR(d.facts_aud);
+      if (typeof DIMTABS !== 'undefined' && DIMTABS.aud) DIMTABS.aud.fact = factsAud;
+      audReady = true; audLoading = false;
+      try { refreshTables(); } catch(_){}
+      /* 人群分类树 / 渠道筛选条 / 维度表都依赖 factsAud，到货后一并重绘 */
+      try { renderAudTree(); } catch(_){}
+      try { renderAudChFilter(); } catch(_){}
+      try { renderDimTable('aud'); } catch(_){}
+      const am = document.getElementById('adviceModal');
+      if (am && !am.hasAttribute('hidden')) { try { renderAdvicePanel(); } catch(_){} }
+    }catch(e){
+      audLoading = false;
+      try { document.querySelectorAll('script[src*="facts_aud.js"]').forEach(function(n){ n.remove(); }); } catch(_){}
+      audTried++;
+      if (audTried < 2){ setTimeout(loadAud, 800); return; }
+      audFailed = true;
+      console.warn('[看板] 人群数据包加载失败，人群分类维度暂不可用：', e && e.message);
+      try { refreshTables(); } catch(_){}
+      try { renderAudTree(); } catch(_){}
+      try { renderAudChFilter(); } catch(_){}
+    }
+  };
+  s.onerror = function(){
+    audLoading = false;
+    try { document.querySelectorAll('script[src*="facts_aud.js"]').forEach(function(n){ n.remove(); }); } catch(_){}
+    audTried++;
+    if (audTried < 2){ setTimeout(loadAud, 800); return; }
+    audFailed = true;
+    console.warn('[看板] 人群数据包下载失败（facts_aud.js），人群分类维度暂不可用');
+    try { refreshTables(); } catch(_){}
+    try { renderAudTree(); } catch(_){}
+    try { renderAudChFilter(); } catch(_){}
+  };
+  document.head.appendChild(s);
+}
+window.__retryAud = function(){ audTried = 0; audFailed = false; loadAud(); };
+/* 与 detail.js 错峰：明细首屏后立即拉（底部明细表要用），人群包 1.5s 后再拉 */
+let audPrefetched = false;
+function prefetchAud(){ if (audPrefetched || !LAZY_AUD) return; audPrefetched = true; loadAud(); }
+setTimeout(prefetchAud, 1500);
 if (LAZY_DETAIL) loadDetail();
 
 /* 明细表全屏放大：点击右上角按钮，卡片变固定浮层，表格一次看更多行 */
