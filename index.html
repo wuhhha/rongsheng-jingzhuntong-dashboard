@@ -960,7 +960,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=2d7812dc13"></script><script src="core_b.js?v=2d7812dc13"></script>
+<script src="core_a.js?v=7a816d91f3"></script><script src="core_b.js?v=7a816d91f3"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1038,7 +1038,7 @@ function showFatal(msg){  const d = document.createElement('div');
 let DS, Q;
 try {
   DS = unpackDS(await gunzipJSON(((window.__CORE_PACK_A__||'')+(window.__CORE_PACK_B__||''))));
-  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 414935 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 5 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 2 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 5 条","花费与展现匹配: 有花费无展现 2 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
+  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 414961 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 5 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 2 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 5 条","花费与展现匹配: 有花费无展现 2 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
 } catch (e) {
   showFatal(e && e.message ? e.message : e);
   return;
@@ -1046,23 +1046,23 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=8f9d221bdc";
+const LAZY_DETAIL = "detail.js?v=04c1181b82";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=226cc78224";
+const LAZY_HIST = "detail_hist.js?v=a4dd3b9983";
 /* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
    首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
    null = 本地版（同期已全量内嵌）。 */
-const LAZY_YOY = "yoy.js?v=eef5562f58";
+const LAZY_YOY = "yoy.js?v=70c0c2f209";
 /* 人群事实表外置（2026-11-12 首屏瘦身）：facts_aud 从核心包拆出，单独落 facts_aud.js。
    动因：核心包 gzip 1218KB 里 1069KB(88%) 是 facts_aud（65216 行 = 日期×三级分类×简称×定位），
         而首屏 13 张 KPI、趋势图一行都不用 —— 它只服务「人群分类」维度表、
         「调整建议」面板和渠道下拉的枚举。拆出后核心包降到 ~150KB。
    策略：首屏渲染完成后空闲预取（与 detail.js 错峰），到货后重建 factsAud 并重绘；口径零变化。
    null = 本地版（全量内嵌）。 */
-const LAZY_AUD = "facts_aud.js?v=fd144b476c";
-const AUD_VER  = "e3f40850f318";
+const LAZY_AUD = "facts_aud.js?v=b45001df3a";
+const AUD_VER  = "20b13aebb1ed";
 /* 状态变量在此声明（而非文件末尾）：首屏 refreshTables 早于底部懒加载代码执行，
    若放在末尾会踩 let 的 TDZ，直接抛 ReferenceError 白屏。 */
 let audReady = !LAZY_AUD, audLoading = false, audFailed = false, audTried = 0;
@@ -1070,8 +1070,8 @@ let audReady = !LAZY_AUD, audLoading = false, audFailed = false, audTried = 0;
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "0789a42c4488";
-const HIST_VER   = "d9561fc92119";
+const DETAIL_VER = "7924a0cfad17";
+const HIST_VER   = "2ed6babcce19";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -1241,7 +1241,7 @@ let factsKwD = [], factsAudD = [], detailReady = false;
    动因：明细表对比期原来也从 facts_kw_detail 取，而该表按设计不含 2025 行 →
         点「同比」后小字恒空（用户报「11 月份还是没有」）。
    来源：① 部署版 = yoy.js 懒加载包里的 facts_kw_detail_yoy（首屏不含，点同比/空闲预取到货）；
-        ② 本地单文件版 = DS 直读（"yoy.js?v=eef5562f58"=null，全量内嵌）。
+        ② 本地单文件版 = DS 直读（"yoy.js?v=70c0c2f209"=null，全量内嵌）。
    ⚠️ 只在「对比日期落在 2025」时启用，其余情况仍走 facts_kw_detail —— 当期口径零变化。 */
 let factsKwDYoy = [];
 function fillYoyDetail(dsrc){
@@ -1580,41 +1580,9 @@ const tgtAudOf = (jc, l1) => {
 /* 表头「目标占比」统一提示 */
 const TGT_TIP = '目标占比＝该产品(简称)的目标规划比例（飞书「分品关键词人群目标」）。未选定单一产品、或该分类无目标时显示「—」';
 
-/* ---- 产品定位目标（源：飞书「产品定位目标」，2026-11-06 用户要求）----
-   `CPC目标` 插在「CPC」**前一列**、`直接ROI目标` 插在「直接ROI」**前一列**。
-   源表已由 process_datasources.py 对齐：定位级用产品定位、单品级用(定位+简称)，汇总级供「总计」行。
-   目标与日期无关 → 单元格**只显示数值、不显示对比小字**（挂对比日期会误导）。 */
-const dwTgtMap = new Map();      // 'D\x01定位' / 'J\x01定位\x01简称' -> {roi, cpc}
-let dwTgtTotal = null;           // 源表「整体合计」行（账户=全部/主账户/混合时用）
-let dwTgtTotalDt = null;         // 源表「对投合计」行（账户只勾「京东对投」时用）
-(DS.dw_target ? toObjs(DS.dw_target) : []).forEach(r => {
-  const lv = String(r['层级'] ?? '').trim();
-  const dw = String(r['产品定位'] ?? '').trim();
-  const jc = String(r['简称'] ?? '').trim();
-  const roi = (r['直接ROI目标'] === null || r['直接ROI目标'] === undefined || r['直接ROI目标'] === '') ? null : num(r['直接ROI目标']);
-  const cpc = (r['CPC目标'] === null || r['CPC目标'] === undefined || r['CPC目标'] === '') ? null : num(r['CPC目标']);
-  const v = { roi, cpc };
-  if (lv === '汇总整体' || lv === '汇总') dwTgtTotal = v;   // '汇总' = 旧版单行合计
-  else if (lv === '汇总对投') dwTgtTotalDt = v;
-  else if (lv === '定位' && dw) dwTgtMap.set('D\u0001' + dw, v);
-  else if (lv === '单品' && dw && jc) dwTgtMap.set('J\u0001' + dw + '\u0001' + jc, v);
-});
-const DW_TGT_KEYS = ['CPC目标', '直接ROI目标'];
-const isDwTgtMetric = k => DW_TGT_KEYS.indexOf(k) >= 0;
-const fmtDwTgt = (k, v) => (v === null || v === undefined || isNaN(v)) ? null : (k === 'CPC目标' ? fmt1(v) : fmtRoi(v));
-const DW_TGT_TIP = '目标值来自飞书「产品定位目标」；产品定位行取定位目标、单品行取单品目标，未登记显示「—」（与日期/对比期无关）';
-const ACC_DT = '京东对投';   // 「对投」账户的 账户昵称（须与数据源一致）
-const DW_TGT_TOTAL_TIP = '总计行目标按账户口径取：账户只勾「京东对投」→ 对投合计行；其余（未选/主账户/多选混合）→ 整体合计行（与日期无关）';
-/* 在 CPC / 直接ROI **之前**各插一列（其余顺序不变） */
-function withDwTgt(list){
-  const out = [];
-  list.forEach(m => {
-    if(m[0] === 'CPC') out.push(['CPC目标','CPC目标']);
-    else if(m[0] === '直接ROI') out.push(['直接ROI目标','直接ROI目标']);
-    out.push(m);
-  });
-  return out;
-}
+/* ---- 产品定位目标（CPC目标 / 直接ROI目标）----
+   **2026-11-23 下线**：飞书「产品定位目标」sheet 被用户删除，看板不再出这两列。
+   （原实现：dwTgtMap / dwTgtTotal / withDwTgt / isDwTgtMetric，见 git 历史） */
 
 /* 对比区间标签 */
 const cmpRangeLabel = () => (fCmpFrom===fCmpTo) ? fmtDate(fCmpFrom) : `${fmtDate(fCmpFrom)}~${fmtDate(fCmpTo)}`;
@@ -3423,15 +3391,13 @@ const expDw = new Set();
 /* 跨源指标（顺序：先 GMV 后 费率，接在付费指标之后；两者默认勾选） */
 const DW_OPS_METRICS = [['商品GMV','商品GMV'],['费率','费率']];
 const DW_METRICS = CH_EXTRAS.concat(ORD_EXTRAS).concat(DW_OPS_METRICS);   // 兼容保留
-/* 可选指标随页面切换（2026-10-09）：日报/周报 = 成交 + 跨源；下单页 = 下单 + 跨源
-   （2026-11-06：CPC目标 / 直接ROI目标 由 withDwTgt 插到 CPC / 直接ROI 之前） */
-const dwList = () => withDwTgt((isOrdPage() ? ORD_EXTRAS : CH_EXTRAS).concat(DW_OPS_METRICS));
-/* ⚠️ dwDef 原本返回**一组 key（字符串）**，withDwTgt 期望 [key,label] 对 → 先 map 成对再插，
-   最后取出 key。（2026-11-06 踩过：直接喂字符串会让 m[0] 变成首字符 'C'，两列全丢、表格只剩 3 列。） */
-const dwDef  = () => withDwTgt((isOrdPage()
+/* 可选指标随页面切换（2026-10-09）：日报/周报 = 成交 + 跨源；下单页 = 下单 + 跨源 */
+const dwList = () => (isOrdPage() ? ORD_EXTRAS : CH_EXTRAS).concat(DW_OPS_METRICS);
+/* dwDef：表头默认勾选的指标 key（2026-11-06 曾在此插入 CPC目标/直接ROI目标，2026-11-23 已下线） */
+const dwDef  = () => (isOrdPage()
   ? ORD_DEF.concat(['商品GMV','费率'])
   : ['CPC','直接ROI','直接CVR','直接加购率','直接订单行','商品GMV','费率']
-).map(k => [k, k])).map(m => m[0]);
+);
 const dwSel  = new Set(dwDef());
 
 function dwTree(rows, gmvMap){
@@ -3462,18 +3428,6 @@ function dwTree(rows, gmvMap){
       n1.ch.forEach(n2 => dwInject(n2.o, gmvMap.get('J\u0001' + n1.name + '\u0001' + n2.name)));
     });
   }
-  /* 注入目标两列（CPC目标 / 直接ROI目标）—— 同样在排序之前；定位行取定位目标、单品行取单品目标。
-     未登记 -> null（渲染「—」），**不要**拿整体目标兜底：会把定位/单品的差异抹平。 */
-  out.forEach(n1 => {
-    const t1 = dwTgtMap.get('D\u0001' + n1.name) || null;
-    n1.o['直接ROI目标'] = t1 ? t1.roi : null;
-    n1.o['CPC目标'] = t1 ? t1.cpc : null;
-    n1.ch.forEach(n2 => {
-      const t2 = dwTgtMap.get('J\u0001' + n1.name + '\u0001' + n2.name) || null;
-      n2.o['直接ROI目标'] = t2 ? t2.roi : null;
-      n2.o['CPC目标'] = t2 ? t2.cpc : null;
-    });
-  });
   out.sort((a, b) => {
     if(dwSortKey === '产品定位'){
       const r = dwIdx(a.name) - dwIdx(b.name);
@@ -3546,10 +3500,6 @@ function renderDwTree(){
   const isOpsMetric = k => (k === '商品GMV' || k === '费率');
   /* 单个单元格：付费指标走 metricCell（含对比小字），跨源两项单独渲染 */
   const dwCell = (key, o, co) => {
-    if(isDwTgtMetric(key)){          // 目标列：静态值，无对比小字
-      const s = fmtDwTgt(key, o[key]);
-      return (s === null) ? '<span class="muted">—</span>' : `<div>${s}</div>`;
-    }
     if(!isOpsMetric(key)) return metricCell(key, o, co);
     const f = key === '商品GMV' ? fmtAmt : fmtPct2;
     const v = o[key], cv = co ? co[key] : null;
@@ -3569,8 +3519,7 @@ function renderDwTree(){
   let h = '<thead><tr>' + cols.map(c => {
     const key = (c === '产品定位') ? '产品定位' : c;
     const on = dwSortKey === key;
-    const tip = isDwTgtMetric(c) ? ` title="${DW_TGT_TIP}"` : '';
-    return `<th class="${c === '产品定位' ? 'l' : ''}" data-k="${key}"${tip} style="${on ? 'color:#2B6CB0;font-weight:600' : ''}">${c}${on ? (dwSortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`;
+    return `<th class="${c === '产品定位' ? 'l' : ''}" data-k="${key}" style="${on ? 'color:#2B6CB0;font-weight:600' : ''}">${c}${on ? (dwSortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`;
   }).join('') + '</tr></thead><tbody>';
   cur.forEach(n1 => {
     const o1 = expDw.has(n1.name);
@@ -3596,14 +3545,7 @@ function renderDwTree(){
          + `<td><b>${fmtAmt(tCur['花费'])}</b>${cmpSub(fmtAmt(tCmp['花费']))}</td>`;
   extras.forEach(m => {
     const k = m[0];
-    if(isDwTgtMetric(k)){
-      /* 总计行的目标 = 源表合计行，**不是**各行相加。
-         2026-11-11 用户口径：账户**只**勾「京东对投」→ 取「对投合计」行；
-         其余（全部未选 / 主账户 / 多选混合）→ 取「整体合计」行。 */
-      const tt = (fAccSel.length === 1 && fAccSel[0] === ACC_DT) ? (dwTgtTotalDt || dwTgtTotal) : dwTgtTotal;
-      const s = fmtDwTgt(k, tt ? tt[k === 'CPC目标' ? 'cpc' : 'roi'] : null);
-      tc += `<td title="${DW_TGT_TOTAL_TIP}"><b>${s === null ? '—' : s}</b></td>`;
-    } else if(isOpsMetric(k)){
+    if(isOpsMetric(k)){
       const f = k === '商品GMV' ? fmtAmt : fmtPct2;
       const v = tCur[k], cv = tCmp[k];
       const main = (v === null || v === undefined) ? '—' : f(v);
