@@ -966,7 +966,7 @@ footer{opacity:.9}
   </div>
 </div>
 
-<script src="core_a.js?v=af765acdd1"></script><script src="core_b.js?v=af765acdd1"></script>
+<script src="core_a.js?v=e29c378fc0"></script><script src="core_b.js?v=e29c378fc0"></script>
 <script>
 (async () => {
 /* ---- 数据解包 ----
@@ -1044,7 +1044,7 @@ function showFatal(msg){  const d = document.createElement('div');
 let DS, Q;
 try {
   DS = unpackDS(await gunzipJSON(((window.__CORE_PACK_A__||'')+(window.__CORE_PACK_B__||''))));
-  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 464971 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 5 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 2 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 5 条","花费与展现匹配: 有花费无展现 2 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
+  Q  = {"checks":[{"name":"文件解析","status":"通过","detail":"成功解析 465011 行"},{"name":"花费列空值","status":"通过","detail":"空值率 0.00%"},{"name":"花费非负","status":"通过","detail":"负值 0 条"},{"name":"日期格式","status":"通过","detail":"异常 0 条"},{"name":"日期连续性","status":"通过","detail":"缺失 0 天"},{"name":"点击≤展现","status":"告警","detail":"矛盾 5 条"},{"name":"花费与展现匹配","status":"告警","detail":"有花费无展现 2 条"},{"name":"关键词表日期对齐","status":"通过","detail":"主表缺失 0 天"},{"name":"人群表日期对齐","status":"通过","detail":"主表缺失 0 天"}],"warnings":["点击≤展现: 矛盾 5 条","花费与展现匹配: 有花费无展现 2 条"],"summary":{"total_checks":9,"passed":7,"warning_count":2}};
 } catch (e) {
   showFatal(e && e.message ? e.message : e);
   return;
@@ -1052,23 +1052,23 @@ try {
 window.DS = DS; window.Q = Q;
 /* 明细懒加载开关：build 侧替换为 null（全量内嵌）或 "detail.js?v=..."（分文件懒加载）。
    分文件时 facts_kw_detail / facts_aud_detail 不内嵌，首屏渲染后再拉取、回填并重渲染。 */
-const LAZY_DETAIL = "detail.js?v=0a9c6fc43c";
+const LAZY_DETAIL = "detail.js?v=24559f3bca";
 /* 历史明细分片（2026-10-05 瘦身）：近期明细在 detail.js，**更早的日期**在 detail_hist.js，
    仅当所选区间（或「调整建议」的近一月）早于已加载明细窗口时才按需拉取。
    拉取完成前**不渲染**偏小的假总计，改为显示「正在加载历史明细」——口径宁缺毋滥。 */
-const LAZY_HIST = "detail_hist.js?v=31fd50171f";
+const LAZY_HIST = "detail_hist.js?v=581c4d9061";
 /* 同期包（2026-11-10）：2025 年同期行已从核心包拆出，只服务「对比日期 → 同比」。
    首屏不下；明细到货后空闲预取，用户点「同比」时若还没到则当场等它。
    null = 本地版（同期已全量内嵌）。 */
-const LAZY_YOY = "yoy.js?v=6c7bf03930";
+const LAZY_YOY = "yoy.js?v=510b4ed008";
 /* 人群事实表外置（2026-11-12 首屏瘦身）：facts_aud 从核心包拆出，单独落 facts_aud.js。
    动因：核心包 gzip 1218KB 里 1069KB(88%) 是 facts_aud（65216 行 = 日期×三级分类×简称×定位），
         而首屏 13 张 KPI、趋势图一行都不用 —— 它只服务「人群分类」维度表、
         「调整建议」面板和渠道下拉的枚举。拆出后核心包降到 ~150KB。
    策略：首屏渲染完成后空闲预取（与 detail.js 错峰），到货后重建 factsAud 并重绘；口径零变化。
    null = 本地版（全量内嵌）。 */
-const LAZY_AUD = "facts_aud.js?v=a3d0b5127a";
-const AUD_VER  = "733a21b3ca6e";
+const LAZY_AUD = "facts_aud.js?v=29c1453558";
+const AUD_VER  = "cfb003bc103e";
 /* 状态变量在此声明（而非文件末尾）：首屏 refreshTables 早于底部懒加载代码执行，
    若放在末尾会踩 let 的 TDZ，直接抛 ReferenceError 白屏。 */
 let audReady = !LAZY_AUD, audLoading = false, audFailed = false, audTried = 0;
@@ -1076,8 +1076,8 @@ let audReady = !LAZY_AUD, audLoading = false, audFailed = false, audTried = 0;
    用途：识别「CDN 半包 / 命中损坏缓存」这类**静默**失败——以往外层 catch(e){} 会把它吞掉，
    表现为「关键词明细 / 人群明细」两张表永久空白且无任何提示（2026-10-15 用户报障）。
    校验值不符（或解包抛错）→ 自动带 cache-buster 重试；重试仍失败才显示可点击重试的提示。 */
-const DETAIL_VER = "386f8792e4a9";
-const HIST_VER   = "5468abc3c7fd";
+const DETAIL_VER = "e6d1882fcb9d";
+const HIST_VER   = "964d00092ad0";
 let histReady = !LAZY_HIST, histLoading = false, histFailed = false, histTried = 0;
 /* 近期明细分片加载状态：detailFailed 用于「失败后给提示而不是永久空白」 */
 let detailLoading = false, detailFailed = false, detailTried = 0;
@@ -1230,24 +1230,25 @@ const YOY_SET   = new Set(YOY_DATES);
 const isYoyDate = d => YOY_SET.size > 0 && YOY_SET.has(String(d || '').trim());
 /* 同期「去年叫什么」（2026-11-23）：只在国内产品更迭（如 方糖系列→方糖2.0、515→510）时才有条目。
    一个今年名可能对多个去年名 -> 值一律为数组。
-   key：'J\x01今年定位\x01今年简称' / 'D\x01今年定位'（定位级只在定位本身变了才有） */
+   ⚠️ 2026-11-23 用户口径：小字**只挂在简称行**，产品定位行不加；且**只显示去年的简称**，
+      不带上「原产品定位」（以前是 `原定位｜原简称`，如「中腰日销｜526灰」）。
+      key 只剩 'J\x01今年定位\x01今年简称'。 */
 const YOY_NAME = new Map();
 const _ynPush = (k, s) => { if (!YOY_NAME.has(k)) YOY_NAME.set(k, []); if (!YOY_NAME.get(k).includes(s)) YOY_NAME.get(k).push(s); };
 /* ⚠️ DS.yoy_alias 是 {columns, rows} 结构（dataset 统一列式），必须 toObjs() 还原 */
 (DS.yoy_alias ? toObjs(DS.yoy_alias) : []).forEach(r => {
   const ndw = String(r['产品定位'] || '').trim();
   const njc = String(r['简称'] || '').trim();
-  const odw = String(r['原产品定位'] || '').trim();
   const ojc = String(r['原简称'] || '').trim();
-  if (!ndw) return;
-  if (njc) _ynPush('J\u0001' + ndw + '\u0001' + njc, odw === ndw ? ojc : (odw + '｜' + ojc));
-  if (odw && odw !== ndw) _ynPush('D\u0001' + ndw, odw);
+  if (!ndw || !njc || !ojc) return;
+  _ynPush('J\u0001' + ndw + '\u0001' + njc, ojc);
 });
-/* 只在「对比区间落在同期」时有意义 —— 否则同期小字跟对比期无关，标了反而误导 */
+/* 只在「对比区间落在同期」时有意义 —— 否则同期小字跟对比期无关，标了反而误导。
+   定位行（无 jc）一律不出小字。 */
 function yoyNameNote(dw, jc){
+  if (!jc) return '';
   if (!fCmpFrom || !isYoyDate(fCmpFrom)) return '';
-  const k = jc ? ('J\u0001' + dw + '\u0001' + jc) : ('D\u0001' + dw);
-  const a = YOY_NAME.get(k);
+  const a = YOY_NAME.get('J\u0001' + dw + '\u0001' + jc);
   return (a && a.length) ? a.join(' / ') : '';
 }
 let factsMainWin = YOY_SET.size ? factsMain.filter(r => !isYoyDate(r['日期'])) : factsMain;
@@ -1269,7 +1270,7 @@ let factsKwD = [], factsAudD = [], detailReady = false;
    动因：明细表对比期原来也从 facts_kw_detail 取，而该表按设计不含 2025 行 →
         点「同比」后小字恒空（用户报「11 月份还是没有」）。
    来源：① 部署版 = yoy.js 懒加载包里的 facts_kw_detail_yoy（首屏不含，点同比/空闲预取到货）；
-        ② 本地单文件版 = DS 直读（"yoy.js?v=6c7bf03930"=null，全量内嵌）。
+        ② 本地单文件版 = DS 直读（"yoy.js?v=510b4ed008"=null，全量内嵌）。
    ⚠️ 只在「对比日期落在 2025」时启用，其余情况仍走 facts_kw_detail —— 当期口径零变化。 */
 let factsKwDYoy = [];
 function fillYoyDetail(dsrc){
@@ -3558,9 +3559,8 @@ function renderDwTree(){
   }).join('') + '</tr></thead><tbody>';
   cur.forEach(n1 => {
     const o1 = expDw.has(n1.name);
-    const nA = yoyNameNote(n1.name, '');
+    /* 定位行不出同比小字（2026-11-23 用户口径：小字只挂在简称行） */
     h += `<tr class="lv1"><td class="l"><span class="tgl ${o1 ? 'open' : ''}" data-t1="${encodeURIComponent(n1.name)}">${o1 ? '▾' : '▸'}</span><span>${n1.name}</span>`
-       + (nA ? `<span class="ynote" title="去年（同期）对应的是：${nA}">去年：${nA}</span>` : '')
        + `</td>` + cells(n1.o, idx.get(n1.name)) + '</tr>';
     if(!o1) return;
     n1.ch.forEach(n2 => {
